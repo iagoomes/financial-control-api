@@ -1,0 +1,494 @@
+openapi: 3.0.3
+info:
+  title: Controle Financeiro API
+  description: API para análise de extratos bancários e controle financeiro pessoal
+  version: 1.0.0
+tags:
+  - name: Extracts
+    description: Operações relacionadas ao processamento de extratos
+  - name: Transactions
+    description: Operações relacionadas às transações
+  - name: Categories
+    description: Operações relacionadas às categorias
+  - name: Reports
+    description: Relatórios e análises financeiras
+paths:
+  /extracts/upload:
+    post:
+      tags:
+        - Extracts
+      summary: Upload e processa extrato bancário
+      description: Recebe um arquivo PDF ou CSV do extrato e retorna as transações processadas
+      operationId: uploadExtract
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Arquivo do extrato (PDF ou CSV)
+                bank:
+                  type: string
+                  enum: [NUBANK, ITAU, BRADESCO, SANTANDER, CAIXA, BB]
+                  description: Banco emissor do extrato
+                  example: NUBANK
+                month:
+                  type: integer
+                  minimum: 1
+                  maximum: 12
+                  description: Mês de referência do extrato
+                  example: 7
+                year:
+                  type: integer
+                  minimum: 2020
+                  maximum: 2030
+                  description: Ano de referência do extrato
+                  example: 2025
+      responses:
+        '200':
+          description: Extrato processado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractAnalysisResponse'
+        '400':
+          description: Arquivo inválido ou parâmetros incorretos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /extracts/{extractId}:
+    get:
+      tags:
+        - Extracts
+      summary: Busca análise de extrato por ID
+      operationId: getExtractById
+      parameters:
+        - name: extractId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID único do extrato processado
+      responses:
+        '200':
+          description: Análise do extrato encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractAnalysisResponse'
+        '404':
+          description: Extrato não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /extracts:
+    get:
+      tags:
+        - Extracts
+      summary: Lista todos os extratos processados
+      operationId: listExtracts
+      parameters:
+        - name: bank
+          in: query
+          schema:
+            type: string
+            enum: [NUBANK, ITAU, BRADESCO, SANTANDER, CAIXA, BB]
+          description: Filtrar por banco
+        - name: year
+          in: query
+          schema:
+            type: integer
+          description: Filtrar por ano
+        - name: month
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: Filtrar por mês
+      responses:
+        '200':
+          description: Lista de extratos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExtractSummary'
+
+  /transactions/{transactionId}/categorize:
+    patch:
+      tags:
+        - Transactions
+      summary: Atualiza categoria de uma transação
+      operationId: categorizeTransaction
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdateRequest'
+      responses:
+        '200':
+          description: Categoria atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transação não encontrada
+
+  /categories:
+    get:
+      tags:
+        - Categories
+      summary: Lista todas as categorias disponíveis
+      operationId: listCategories
+      responses:
+        '200':
+          description: Lista de categorias
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+  /reports/monthly:
+    get:
+      tags:
+        - Reports
+      summary: Relatório mensal de gastos
+      operationId: getMonthlyReport
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+      responses:
+        '200':
+          description: Relatório mensal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyReport'
+
+components:
+  schemas:
+    ExtractAnalysisResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único do extrato processado
+        bank:
+          type: string
+          enum: [NUBANK, ITAU, BRADESCO, SANTANDER, CAIXA, BB]
+        period:
+          $ref: '#/components/schemas/Period'
+        summary:
+          $ref: '#/components/schemas/FinancialSummary'
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        categoryBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategorySummary'
+        processedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - bank
+        - period
+        - summary
+        - transactions
+        - categoryBreakdown
+        - processedAt
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+          description: Data da transação
+          example: "2025-07-30"
+        title:
+          type: string
+          description: Descrição/estabelecimento da transação
+          example: "Mercantil Red"
+        amount:
+          type: number
+          format: double
+          description: Valor da transação (positivo para gastos, negativo para entradas)
+          example: 30.71
+        category:
+          $ref: '#/components/schemas/Category'
+        originalDescription:
+          type: string
+          description: Descrição original do extrato
+        confidence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Confiança na categorização automática
+      required:
+        - id
+        - date
+        - title
+        - amount
+        - category
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Alimentação"
+        color:
+          type: string
+          pattern: "^#[0-9A-Fa-f]{6}$"
+          example: "#FF6B6B"
+        icon:
+          type: string
+          example: "🍽️"
+        parentCategoryId:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+        - id
+        - name
+        - color
+
+    FinancialSummary:
+      type: object
+      properties:
+        totalIncome:
+          type: number
+          format: double
+          description: Total de entradas no período
+          example: 148.74
+        totalExpenses:
+          type: number
+          format: double
+          description: Total de gastos no período
+          example: 2340.50
+        netAmount:
+          type: number
+          format: double
+          description: Saldo líquido (entradas - gastos)
+          example: -2191.76
+        transactionCount:
+          type: integer
+          description: Número total de transações
+          example: 26
+        averageTransactionValue:
+          type: number
+          format: double
+          description: Valor médio das transações
+      required:
+        - totalIncome
+        - totalExpenses
+        - netAmount
+        - transactionCount
+
+    CategorySummary:
+      type: object
+      properties:
+        category:
+          $ref: '#/components/schemas/Category'
+        totalAmount:
+          type: number
+          format: double
+          description: Total gasto na categoria
+        transactionCount:
+          type: integer
+          description: Número de transações na categoria
+        percentage:
+          type: number
+          format: double
+          description: Percentual do total de gastos
+          minimum: 0
+          maximum: 100
+        averageAmount:
+          type: number
+          format: double
+          description: Valor médio por transação na categoria
+      required:
+        - category
+        - totalAmount
+        - transactionCount
+        - percentage
+
+    Period:
+      type: object
+      properties:
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+          example: 7
+        year:
+          type: integer
+          example: 2025
+        startDate:
+          type: string
+          format: date
+          example: "2025-07-01"
+        endDate:
+          type: string
+          format: date
+          example: "2025-07-31"
+      required:
+        - month
+        - year
+        - startDate
+        - endDate
+
+    ExtractSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        bank:
+          type: string
+          enum: [NUBANK, ITAU, BRADESCO, SANTANDER, CAIXA, BB]
+        period:
+          $ref: '#/components/schemas/Period'
+        totalExpenses:
+          type: number
+          format: double
+        totalIncome:
+          type: number
+          format: double
+        transactionCount:
+          type: integer
+        processedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - bank
+        - period
+        - totalExpenses
+        - totalIncome
+        - transactionCount
+        - processedAt
+
+    CategoryUpdateRequest:
+      type: object
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          description: ID da nova categoria
+      required:
+        - categoryId
+
+    MonthlyReport:
+      type: object
+      properties:
+        period:
+          $ref: '#/components/schemas/Period'
+        summary:
+          $ref: '#/components/schemas/FinancialSummary'
+        categoryBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategorySummary'
+        dailyExpenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyExpense'
+        topExpenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+          maxItems: 10
+
+    DailyExpense:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        totalAmount:
+          type: number
+          format: double
+        transactionCount:
+          type: integer
+      required:
+        - date
+        - totalAmount
+        - transactionCount
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Código do erro
+        message:
+          type: string
+          description: Mensagem descritiva do erro
+        details:
+          type: array
+          items:
+            type: string
+          description: Detalhes adicionais do erro
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - error
+        - message
+        - timestamp
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

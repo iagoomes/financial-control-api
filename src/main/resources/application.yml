@@ -1,0 +1,117 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+spring:
+  application:
+    name: financial-control-api
+
+  # H2 Database (development)
+  datasource:
+    url: jdbc:h2:file:./data/financial_control;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+  # File Upload Configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+      enabled: true
+
+# OpenAPI Documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+  show-actuator: false
+
+# Logging
+logging:
+  level:
+    br.com.iagoomes.financialcontrol: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# Custom Properties
+app:
+  file-storage:
+    upload-dir: ./uploads
+  banks:
+    nubank:
+      csv-delimiter: ","
+      date-format: "yyyy-MM-dd"
+    santander:
+      pdf-processing-enabled: false
+  categories:
+    auto-categorization-enabled: true
+    confidence-threshold: 0.7
+
+---
+# Profile para Produção
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/financial_control
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:financial_user}
+    password: ${DB_PASSWORD:password}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  h2:
+    console:
+      enabled: false
+
+logging:
+  level:
+    br.com.iagoomes.financialcontrol: INFO
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN
+
+---
+# Profile para Testes
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
