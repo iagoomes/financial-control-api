@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 public class ExtractionResource implements ExtractsApiDelegate {
 
 
+
     @Override
     public CompletableFuture<ResponseEntity<ExtractAnalysisResponse>> getExtractById(UUID extractId) {
         return ExtractsApiDelegate.super.getExtractById(extractId);
