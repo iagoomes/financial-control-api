@@ -1,7 +1,6 @@
 package br.com.iagoomes.financialcontrol.infra.repository.entity;
 
 import br.com.iagoomes.financialcontrol.domain.entity.TransactionType;
-import br.com.iagoomes.financialcontrol.model.Category;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -19,7 +18,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.Date;
 
 @Entity
 @Table(name = "transactions")
@@ -35,7 +34,7 @@ public class TransactionData {
     private String id;
 
     @Column(name = "date", nullable = false)
-    private LocalDate date;
+    private Date date;
 
     @Column(name = "title", nullable = false, length = 500)
     private String title;

@@ -17,9 +17,11 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -117,7 +119,7 @@ public class NubankCsvService {
         TransactionType transactionType = determineTransactionType(title, amount);
 
         return TransactionData.builder()
-                .date(date)
+                .date(Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant()))
                 .title(title)
                 .amount(amount)
                 .originalDescription(title)
