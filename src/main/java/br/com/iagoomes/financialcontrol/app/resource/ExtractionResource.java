@@ -8,7 +8,6 @@ import br.com.iagoomes.financialcontrol.domain.entity.BankType;
 import br.com.iagoomes.financialcontrol.infra.repository.entity.ExtractData;
 import br.com.iagoomes.financialcontrol.model.ExtractAnalysisResponse;
 import br.com.iagoomes.financialcontrol.model.ExtractSummary;
-
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 /**
  * Delegate implementation for Extracts API
@@ -92,7 +90,7 @@ public class ExtractionResource implements ExtractsApiDelegate {
 
                 List<ExtractSummary> summaries = extracts.stream()
                         .map(extractMapper::toExtractSummary)
-                        .collect(Collectors.toList());
+                        .toList();
 
                 log.info("Successfully retrieved {} extracts", summaries.size());
                 return ResponseEntity.ok(summaries);
@@ -122,7 +120,7 @@ public class ExtractionResource implements ExtractsApiDelegate {
 
                 ExtractAnalysisResponse response;
 
-                // Process based on bank type
+                // Process based on a bank type
                 if ("NUBANK".equalsIgnoreCase(bank)) {
                     response = processNubankCsv(file, month, year);
                 } else {
