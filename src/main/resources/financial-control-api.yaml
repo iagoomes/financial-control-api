@@ -156,7 +156,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Transaction'
+                $ref: '#/components/schemas/TransactionDTO'
         '404':
           description: Transação não encontrada
 
@@ -174,7 +174,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Category'
+                  $ref: '#/components/schemas/CategoryDTO'
 
   /reports/monthly:
     get:
@@ -222,7 +222,7 @@ components:
         transactions:
           type: array
           items:
-            $ref: '#/components/schemas/Transaction'
+            $ref: '#/components/schemas/TransactionDTO'
         categoryBreakdown:
           type: array
           items:
@@ -239,7 +239,7 @@ components:
         - categoryBreakdown
         - processedAt
 
-    Transaction:
+    TransactionDTO:
       type: object
       properties:
         id:
@@ -259,8 +259,8 @@ components:
           format: double
           description: Valor da transação (positivo para gastos, negativo para entradas)
           example: 30.71
-        category:
-          $ref: '#/components/schemas/Category'
+        Category:
+          $ref: '#/components/schemas/CategoryDTO'
         originalDescription:
           type: string
           description: Descrição original do extrato
@@ -275,9 +275,9 @@ components:
         - date
         - title
         - amount
-        - category
+        - Category
 
-    Category:
+    CategoryDTO:
       type: object
       properties:
         id:
@@ -337,8 +337,8 @@ components:
     CategorySummary:
       type: object
       properties:
-        category:
-          $ref: '#/components/schemas/Category'
+        CategoryDTO:
+          $ref: '#/components/schemas/CategoryDTO'
         totalAmount:
           type: number
           format: double
@@ -357,7 +357,7 @@ components:
           format: double
           description: Valor médio por transação na categoria
       required:
-        - category
+        - CategoryDTO
         - totalAmount
         - transactionCount
         - percentage
@@ -446,7 +446,7 @@ components:
         topExpenses:
           type: array
           items:
-            $ref: '#/components/schemas/Transaction'
+            $ref: '#/components/schemas/TransactionDTO'
           maxItems: 10
 
     DailyExpense:
