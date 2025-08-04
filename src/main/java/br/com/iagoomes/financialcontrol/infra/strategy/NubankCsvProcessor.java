@@ -3,6 +3,8 @@ package br.com.iagoomes.financialcontrol.infra.strategy;
 import br.com.iagoomes.financialcontrol.domain.entity.Extract;
 import br.com.iagoomes.financialcontrol.domain.entity.Transaction;
 import br.com.iagoomes.financialcontrol.domain.entity.TransactionType;
+import br.com.iagoomes.financialcontrol.domain.entity.Category;
+import br.com.iagoomes.financialcontrol.app.service.CategoryService;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
@@ -20,9 +22,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Service for processing Nubank CSV files
+ * Service for processing Nubank CSV files with automatic categorization
  */
 @Slf4j
 @Service
@@ -31,14 +34,8 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    /**
-     * Process Nubank CSV file and ExtractData transactions
-     *
-     * @param file CSV file uploaded
-     * @param month Reference month
-     * @param year Reference year
-     * @return ExtractData with processed transactions
-     */
+    private final CategoryService categoryService;
+
     @Override
     public Extract processFile(MultipartFile file, Integer month, Integer year) {
         log.info("Starting to process Nubank CSV file: {}", file.getOriginalFilename());
@@ -49,7 +46,8 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
             List<Transaction> transactions = parseTransactions(file);
             Extract extract = Extract.create(transactions, month, year);
 
-            log.info("Successfully processed {} transactions from Nubank CSV", transactions.size());
+            log.info("Successfully processed {} transactions from Nubank CSV with automatic categorization",
+                    transactions.size());
             return extract;
 
         } catch (Exception e) {
@@ -58,9 +56,6 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
         }
     }
 
-    /**
-     * Parse CSV file and create TransactionData entities
-     */
     private List<Transaction> parseTransactions(MultipartFile file) throws IOException, CsvException {
         List<Transaction> transactions = new ArrayList<>();
 
@@ -75,10 +70,10 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
                 String[] record = records.get(i);
 
                 try {
-                    Transaction transaction = parseTransactionRecord(record, i + 2); // +2 because of header and 0-based index
+                    Transaction transaction = parseTransactionRecord(record, i + 2);
                     transactions.add(transaction);
                 } catch (Exception e) {
-                    log.warn("Failed to parse TransactionData at line {}: {}", i + 2, e.getMessage());
+                    log.warn("Failed to parse transaction at line {}: {}", i + 2, e.getMessage());
                     // Continue processing other transactions
                 }
             }
@@ -87,12 +82,10 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
         return transactions;
     }
 
-    /**
-     * Parse individual CSV record into TransactionData
-     */
     private Transaction parseTransactionRecord(String[] record, int lineNumber) {
         if (record.length < 3) {
-            throw new IllegalArgumentException("Invalid CSV format at line " + lineNumber + ": expected 3 columns, got " + record.length);
+            throw new IllegalArgumentException("Invalid CSV format at line " + lineNumber +
+                    ": expected 3 columns, got " + record.length);
         }
 
         String dateString = record[0].trim();
@@ -118,12 +111,22 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
         // Determine transaction type
         TransactionType transactionType = determineTransactionType(title, amount);
 
-        return Transaction.create(date, title, amount, title, transactionType);
+        // Create transaction
+        Transaction transaction = Transaction.create(date, title, amount, title, transactionType);
+
+        // Auto-categorize transaction using category service
+        Optional<Category> category = categoryService.categorizeTransaction(title, amount);
+        if (category.isPresent()) {
+            transaction.setCategory(category.get());
+            transaction.setConfidence(BigDecimal.valueOf(0.85)); // 85% confidence for auto-categorization
+            log.debug("Auto-categorized '{}' as '{}'", title, category.get().getName());
+        } else {
+            transaction.setConfidence(BigDecimal.valueOf(0.0)); // No categorization
+        }
+
+        return transaction;
     }
 
-    /**
-     * Determine TransactionData type based on title and amount
-     */
     private TransactionType determineTransactionType(String title, BigDecimal amount) {
         String titleLower = title.toLowerCase();
 
@@ -151,10 +154,6 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
         return amount.compareTo(BigDecimal.ZERO) >= 0 ? TransactionType.DEBIT : TransactionType.CREDIT;
     }
 
-
-    /**
-     * Validate CSV file format
-     */
     @Override
     public void validateFile(MultipartFile file) {
         if (file.isEmpty()) {

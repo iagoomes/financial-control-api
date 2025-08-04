@@ -3,7 +3,6 @@ package br.com.iagoomes.financialcontrol.app.mapper;
 import br.com.iagoomes.financialcontrol.domain.entity.Category;
 import br.com.iagoomes.financialcontrol.domain.entity.Extract;
 import br.com.iagoomes.financialcontrol.domain.entity.Transaction;
-import br.com.iagoomes.financialcontrol.infra.repository.entity.ExtractData;
 import br.com.iagoomes.financialcontrol.model.CategoryDTO;
 import br.com.iagoomes.financialcontrol.model.CategorySummary;
 import br.com.iagoomes.financialcontrol.model.ExtractAnalysisResponse;
@@ -18,7 +17,9 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Mapper between JPA entities and OpenAPI generated DTOs
@@ -46,7 +47,7 @@ public class AppMapper {
     /**
      * Convert Extract entity to ExtractSummary DTO
      */
-    public ExtractSummary toExtractSummary(ExtractData extract) {
+    public ExtractSummary toExtractSummary(Extract extract) {
         ExtractSummary summary = new ExtractSummary();
 
         summary.setId(UUID.fromString(extract.getId()));
@@ -158,8 +159,40 @@ public class AppMapper {
      * Create category breakdown (placeholder - implement based on business logic)
      */
     private List<CategorySummary> createCategoryBreakdown(Extract extract) {
-        // For now, return empty list
-        // TODO: Implement category breakdown logic
-        return List.of();
+        if (extract.getTransactions().isEmpty()) {
+            return List.of();
+        }
+
+        // Calcular total de gastos para percentuais
+        double totalExpenses = extract.getTotalExpenses().doubleValue();
+
+        // Agrupar transações por ID da categoria
+        Map<String, List<Transaction>> transactionsByCategory = extract.getTransactions().stream()
+                .filter(t -> t.getCategory() != null)
+                .collect(Collectors.groupingBy(t -> t.getCategory().getId()));
+
+        // Criar um CategorySummary para cada categoria
+        return transactionsByCategory.values().stream()
+                .map(transactions -> {
+                    Category category = transactions.get(0).getCategory(); // Pegar categoria do primeiro item
+
+                    double totalAmount = transactions.stream()
+                            .mapToDouble(t -> t.getAmount().doubleValue())
+                            .sum();
+
+                    int transactionCount = transactions.size();
+                    double percentage = totalExpenses > 0 ? (totalAmount / totalExpenses) * 100 : 0;
+                    double averageAmount = transactionCount > 0 ? totalAmount / transactionCount : 0;
+
+                    CategorySummary summary = new CategorySummary();
+                    summary.setCategoryDTO(mapCategory(category));
+                    summary.setTotalAmount(totalAmount);
+                    summary.setTransactionCount(transactionCount);
+                    summary.setPercentage(percentage);
+                    summary.setAverageAmount(averageAmount);
+
+                    return summary;
+                })
+                .toList();
     }
 }

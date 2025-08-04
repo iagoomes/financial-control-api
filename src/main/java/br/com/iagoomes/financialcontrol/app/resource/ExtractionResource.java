@@ -1,12 +1,9 @@
 package br.com.iagoomes.financialcontrol.app.resource;
 
 import br.com.iagoomes.financialcontrol.api.ExtractsApiDelegate;
-import br.com.iagoomes.financialcontrol.app.mapper.AppMapper;
 import br.com.iagoomes.financialcontrol.app.service.ExtractService;
-import br.com.iagoomes.financialcontrol.infra.strategy.NubankCsvProcessor;
 import br.com.iagoomes.financialcontrol.model.ExtractAnalysisResponse;
 import br.com.iagoomes.financialcontrol.model.ExtractSummary;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -14,111 +11,72 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Delegate implementation for Extracts API
+ * Resource implementation for Extracts API - calls Application Service
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class ExtractionResource implements ExtractsApiDelegate {
 
-    private final NubankCsvProcessor nubankCsvProcessor;
-    private final ExtractService extractService;
-    private final AppMapper appMapper;
+    private final ExtractService extractService; // ✅ Chama Application Service
 
     @Override
-    @Transactional
     public CompletableFuture<ResponseEntity<ExtractAnalysisResponse>> getExtractById(UUID extractId) {
-//        return CompletableFuture.supplyAsync(() -> {
-//            try {
-//                log.info("Fetching extract by ID: {}", extractId);
-//
-//                Optional<ExtractData> extractOpt = extractService.findById(extractId.toString());
-//
-//                if (extractOpt.isEmpty()) {
-//                    log.warn("Extract not found with ID: {}", extractId);
-//                    return ResponseEntity.notFound().build();
-//                }
-//
-//                ExtractData extract = extractOpt.get();
-//                ExtractAnalysisResponse response = extractMapper.toExtractAnalysisResponse(extract);
-//
-//                log.info("Successfully retrieved extract: {}", extractId);
-//                return ResponseEntity.ok(response);
-//
-//            } catch (Exception e) {
-//                log.error("Error fetching extract by ID: {}", extractId, e);
-//                return ResponseEntity.internalServerError().build();
-//            }
-//        });
-        return null;
+        try {
+            log.info("Resource: Fetching extract by ID: {}", extractId);
+
+            Optional<ExtractAnalysisResponse> response = extractService.getExtractById(extractId);
+
+            return response.map(extractAnalysisResponse -> CompletableFuture.completedFuture(ResponseEntity.ok(extractAnalysisResponse))).orElseGet(() -> CompletableFuture.completedFuture(ResponseEntity.notFound().build()));
+
+        } catch (Exception e) {
+            log.error("Resource: Error fetching extract by ID: {}", extractId, e);
+            return CompletableFuture.completedFuture(ResponseEntity.internalServerError().build());
+        }
     }
 
     @Override
     public CompletableFuture<ResponseEntity<List<ExtractSummary>>> listExtracts(String bank, Integer year, Integer month) {
-//        return CompletableFuture.supplyAsync(() -> {
-//            try {
-//                log.info("Listing extracts with filters - bank: {}, year: {}, month: {}", bank, year, month);
-//
-//                List<ExtractData> extracts;
-//
-//                // Apply filters based on parameters
-//                if (bank != null && year != null && month != null) {
-//                    // Find specific extract
-//                    BankType bankType = BankType.valueOf(bank.toUpperCase());
-//                    Optional<ExtractData> extractOpt = extractService.findByBankAndPeriod(bankType, month, year);
-//                    extracts = extractOpt.map(List::of).orElse(List.of());
-//
-//                } else if (bank != null) {
-//                    // Filter by bank
-//                    BankType bankType = BankType.valueOf(bank.toUpperCase());
-//                    extracts = extractService.findByBank(bankType);
-//
-//                } else if (year != null) {
-//                    // Filter by year
-//                    extracts = extractService.findByYear(year);
-//
-//                } else {
-//                    // No filters - get all
-//                    extracts = extractService.findAll();
-//                }
-//
-//                List<ExtractSummary> summaries = extracts.stream()
-//                        .map(extractMapper::toExtractSummary)
-//                        .toList();
-//
-//                log.info("Successfully retrieved {} extracts", summaries.size());
-//                return ResponseEntity.ok(summaries);
-//
-//            } catch (IllegalArgumentException e) {
-//                log.warn("Invalid bank parameter: {}", bank, e);
-//                return ResponseEntity.badRequest().build();
-//
-//            } catch (Exception e) {
-//                log.error("Error listing extracts", e);
-//                return ResponseEntity.internalServerError().build();
-//            }
-//        });
-        return null;
+        try {
+            log.info("Resource: Listing extracts with filters - bank: {}, year: {}, month: {}", bank, year, month);
+
+            List<ExtractSummary> summaries = extractService.listExtracts(bank, year, month);
+
+            return CompletableFuture.completedFuture(ResponseEntity.ok(summaries));
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Resource: Invalid parameters: {}", e.getMessage());
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().build());
+
+        } catch (Exception e) {
+            log.error("Resource: Error listing extracts", e);
+            return CompletableFuture.completedFuture(ResponseEntity.internalServerError().build());
+        }
     }
 
     @Override
     public CompletableFuture<ResponseEntity<ExtractAnalysisResponse>> uploadExtract(
             MultipartFile file, String bank, Integer month, Integer year) {
 
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                ExtractAnalysisResponse response = extractService.processExtractFile(file, bank, month, year);
-                return ResponseEntity.ok(response);
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest().build();
-            } catch (Exception e) {
-                log.error("Error processing extract upload", e);
-                return ResponseEntity.internalServerError().build();
-            }
-        });
+        try {
+            log.info("Resource: Processing extract upload - bank: {}, month: {}, year: {}", bank, month, year);
+
+            ExtractAnalysisResponse response = extractService.processExtractFile(file, bank, month, year);
+
+            return CompletableFuture.completedFuture(ResponseEntity.ok(response));
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Resource: Invalid request: {}", e.getMessage());
+            return CompletableFuture.completedFuture(ResponseEntity.badRequest().build());
+
+        } catch (Exception e) {
+            log.error("Resource: Error processing extract upload", e);
+            return CompletableFuture.completedFuture(ResponseEntity.internalServerError().build());
+        }
     }
 }

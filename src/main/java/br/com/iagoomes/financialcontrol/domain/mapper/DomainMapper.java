@@ -1,7 +1,9 @@
 package br.com.iagoomes.financialcontrol.domain.mapper;
 
+import br.com.iagoomes.financialcontrol.domain.entity.Category;
 import br.com.iagoomes.financialcontrol.domain.entity.Extract;
 import br.com.iagoomes.financialcontrol.domain.entity.Transaction;
+import br.com.iagoomes.financialcontrol.infra.repository.entity.CategoryData;
 import br.com.iagoomes.financialcontrol.infra.repository.entity.ExtractData;
 import br.com.iagoomes.financialcontrol.infra.repository.entity.TransactionData;
 import org.springframework.stereotype.Component;
@@ -81,6 +83,7 @@ public class DomainMapper {
         transaction.setOriginalDescription(transactionData.getOriginalDescription());
         transaction.setTransactionType(transactionData.getTransactionType());
         transaction.setConfidence(transactionData.getConfidence());
+        transaction.setCategory(toCategoryDomain(transactionData.getCategory()));
 
         return transaction;
     }
@@ -98,6 +101,40 @@ public class DomainMapper {
                 .originalDescription(transaction.getOriginalDescription())
                 .transactionType(transaction.getTransactionType())
                 .confidence(transaction.getConfidence())
+                .category(toCategoryData(transaction.getCategory()))
+                .build();
+    }
+
+    public Category toCategoryDomain(CategoryData categoryData) {
+        if (categoryData == null) {
+            return null;
+        }
+
+        Category category = new Category();
+        category.setId(categoryData.getId());
+        category.setName(categoryData.getName());
+        category.setColor(categoryData.getColor());
+        category.setIcon(categoryData.getIcon());
+        category.setParentCategoryId(categoryData.getParentCategoryId());
+        category.setCreatedAt(categoryData.getCreatedAt());
+        category.setUpdatedAt(categoryData.getUpdatedAt());
+
+        return category;
+    }
+
+    public CategoryData toCategoryData(Category category) {
+        if (category == null) {
+            return null;
+        }
+
+        return CategoryData.builder()
+                .id(category.getId())
+                .name(category.getName())
+                .color(category.getColor())
+                .icon(category.getIcon())
+                .parentCategoryId(category.getParentCategoryId())
+                .createdAt(category.getCreatedAt())
+                .updatedAt(category.getUpdatedAt())
                 .build();
     }
 }

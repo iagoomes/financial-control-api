@@ -9,6 +9,7 @@ import br.com.iagoomes.financialcontrol.infra.repository.entity.ExtractData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -22,6 +23,40 @@ public class ExtractDataProvider implements ExtractProvider {
     public Optional<Extract> findByBankAndPeriod(BankType bankType, Integer month, Integer year) {
         Optional<ExtractData> extractData = extractRepository.findByBankAndReferenceMonthAndReferenceYear(
                 bankType, month, year);
+
+        return extractData.map(domainMapper::toExtractDomain);
+    }
+
+    @Override
+    public List<Extract> findByBank(BankType bankType) {
+        List<ExtractData> extractDataList = extractRepository.findByBank(bankType);
+
+        return extractDataList.stream()
+                .map(domainMapper::toExtractDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Extract> findByYear(Integer year) {
+        List<ExtractData> extractDataList = extractRepository.findByReferenceYear(year);
+
+        return extractDataList.stream()
+                .map(domainMapper::toExtractDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Extract> findAll() {
+        List<ExtractData> extractDataList = extractRepository.findAll();
+
+        return extractDataList.stream()
+                .map(domainMapper::toExtractDomain)
+                .toList();
+    }
+
+    @Override
+    public Optional<Extract> findByIdWithTransactions(String extractId) {
+        Optional<ExtractData> extractData = extractRepository.findByIdWithTransactions(extractId);
 
         return extractData.map(domainMapper::toExtractDomain);
     }

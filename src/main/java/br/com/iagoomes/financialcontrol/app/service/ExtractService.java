@@ -4,9 +4,10 @@ import br.com.iagoomes.financialcontrol.app.mapper.AppMapper;
 import br.com.iagoomes.financialcontrol.domain.entity.BankType;
 import br.com.iagoomes.financialcontrol.domain.entity.Extract;
 import br.com.iagoomes.financialcontrol.domain.usecase.ProcessExtractFileUseCase;
-import br.com.iagoomes.financialcontrol.infra.repository.entity.ExtractData;
+import br.com.iagoomes.financialcontrol.domain.usecase.GetExtractByIdUseCase;
+import br.com.iagoomes.financialcontrol.domain.usecase.ListExtractsUseCase;
 import br.com.iagoomes.financialcontrol.model.ExtractAnalysisResponse;
-import jakarta.transaction.Transactional;
+import br.com.iagoomes.financialcontrol.model.ExtractSummary;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,75 +15,57 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+/**
+ * Application Service - Orchestrates Use Cases and handles DTOs
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ExtractService {
 
     private final ProcessExtractFileUseCase processExtractFileUseCase;
+    private final GetExtractByIdUseCase getExtractByIdUseCase;
+    private final ListExtractsUseCase listExtractsUseCase;
     private final AppMapper appMapper;
 
+    /**
+     * Process extract file upload
+     */
     public ExtractAnalysisResponse processExtractFile(MultipartFile file, String bank, Integer month, Integer year) {
+        log.info("Processing extract file: bank={}, month={}, year={}", bank, month, year);
+
         validateUploadParameters(file, bank, month, year);
-        Extract extract = processExtractFileUseCase.execute(file, BankType.valueOf(bank.toUpperCase()), month, year);
+
+        BankType bankType = BankType.valueOf(bank.toUpperCase());
+        Extract extract = processExtractFileUseCase.execute(file, bankType, month, year);
+
         return appMapper.toExtractAnalysisResponse(extract);
     }
 
     /**
-     * Save extract to database
+     * Get extract by ID
      */
-    @Transactional
-    public ExtractData saveExtract(ExtractData extract) {
-        return null;
+    public Optional<ExtractAnalysisResponse> getExtractById(UUID extractId) {
+        log.info("Getting extract by ID: {}", extractId);
+
+        Optional<Extract> extract = getExtractByIdUseCase.execute(extractId.toString());
+        return extract.map(appMapper::toExtractAnalysisResponse);
     }
 
     /**
-     * Find extract by ID
+     * List extracts with filters
      */
-    @Transactional
-    public Optional<ExtractData> findById(String id) {
-        return null;
-    }
+    public List<ExtractSummary> listExtracts(String bank, Integer year, Integer month) {
+        log.info("Listing extracts with filters - bank: {}, year: {}, month: {}", bank, year, month);
 
-    /**
-     * Find extracts by bank
-     */
-    public List<ExtractData> findByBank(BankType bank) {
-        return null;
-    }
+        BankType bankType = bank != null ? BankType.valueOf(bank.toUpperCase()) : null;
+        List<Extract> extracts = listExtractsUseCase.execute(bankType, year, month);
 
-    /**
-     * Find extracts by year
-     */
-    public List<ExtractData> findByYear(Integer year) {
-        return null;
-    }
-
-    /**
-     * Find all extracts
-     */
-    public List<ExtractData> findAll() {
-        return null;
-    }
-
-    public Optional<ExtractData> findByBankAndPeriod(BankType bank, Integer month, Integer year) {
-        return null;
-    }
-
-    /**
-     * Find extracts by year and month range
-     */
-    public List<ExtractData> findByYearAndMonthRange(Integer year, Integer startMonth, Integer endMonth) {
-        return null;
-    }
-
-    /**
-     * Delete extract by ID
-     */
-    @Transactional
-    public void deleteById(String id) {
-        log.info("Deleting extract with ID: {}", id);
+        return extracts.stream()
+                .map(appMapper::toExtractSummary)
+                .toList();
     }
 
     /**

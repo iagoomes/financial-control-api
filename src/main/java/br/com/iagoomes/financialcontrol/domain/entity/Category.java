@@ -1,5 +1,7 @@
 package br.com.iagoomes.financialcontrol.domain.entity;
 
+import java.time.LocalDateTime;
+
 /**
  * Category domain entity
  */
@@ -10,7 +12,8 @@ public class Category {
     private String color;
     private String icon;
     private String parentCategoryId;
-
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     /**
      * Factory method to create a new category
      */
@@ -45,7 +48,6 @@ public class Category {
         return !isRootCategory();
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -84,5 +86,21 @@ public class Category {
 
     public void setParentCategoryId(String parentCategoryId) {
         this.parentCategoryId = parentCategoryId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }
