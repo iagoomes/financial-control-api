@@ -259,7 +259,7 @@ components:
           format: double
           description: Valor da transação (positivo para gastos, negativo para entradas)
           example: 30.71
-        Category:
+        category:
           $ref: '#/components/schemas/CategoryDTO'
         originalDescription:
           type: string
@@ -337,7 +337,7 @@ components:
     CategorySummary:
       type: object
       properties:
-        CategoryDTO:
+        category:
           $ref: '#/components/schemas/CategoryDTO'
         totalAmount:
           type: number
@@ -357,7 +357,7 @@ components:
           format: double
           description: Valor médio por transação na categoria
       required:
-        - CategoryDTO
+        - category
         - totalAmount
         - transactionCount
         - percentage

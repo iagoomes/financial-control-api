@@ -9,7 +9,6 @@ import br.com.iagoomes.financialcontrol.infra.repository.entity.TransactionData;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class DomainMapper {
@@ -33,7 +32,7 @@ public class DomainMapper {
             List<Transaction> transactions = extractData.getTransactions()
                     .stream()
                     .map(this::toTransactionDomain)
-                    .collect(Collectors.toList());
+                    .toList();
             extract.setTransactions(transactions);
         }
 
@@ -60,7 +59,7 @@ public class DomainMapper {
             List<TransactionData> transactions = extract.getTransactions()
                     .stream()
                     .map(this::toTransactionData)
-                    .collect(Collectors.toList());
+                    .toList();
             extractData.setTransactions(transactions);
 
             // Definir o relacionamento bidirecional

@@ -113,46 +113,46 @@ public class AppMapper {
     }
 
     /**
-     * Map single Transaction entity to Transaction DTO
+     * Map single Transaction entity to API Transaction model
      */
     private TransactionDTO mapTransaction(Transaction transaction) {
-        TransactionDTO dto = new TransactionDTO();
+        TransactionDTO apiTransaction = new TransactionDTO();
 
-        dto.setId(UUID.fromString(transaction.getId()));
-        dto.setDate(transaction.getDate());
-        dto.setTitle(transaction.getTitle());
-        dto.setAmount(transaction.getAmount().doubleValue());
-        dto.setOriginalDescription(transaction.getOriginalDescription());
+        apiTransaction.setId(UUID.fromString(transaction.getId()));
+        apiTransaction.setDate(transaction.getDate());
+        apiTransaction.setTitle(transaction.getTitle());
+        apiTransaction.setAmount(transaction.getAmount().doubleValue());
+        apiTransaction.setOriginalDescription(transaction.getOriginalDescription());
 
         // Set category if available
         if (transaction.getCategory() != null) {
-            dto.setCategory(mapCategory(transaction.getCategory()));
+            apiTransaction.setCategory(mapCategory(transaction.getCategory()));
         }
 
         // Set confidence if available
         if (transaction.getConfidence() != null) {
-            dto.setConfidence(transaction.getConfidence().doubleValue());
+            apiTransaction.setConfidence(transaction.getConfidence().doubleValue());
         }
 
-        return dto;
+        return apiTransaction;
     }
 
     /**
-     * Map Category entity to Category DTO
+     * Map Category entity to API Category model
      */
     private CategoryDTO mapCategory(Category category) {
-        CategoryDTO dto = new CategoryDTO();
+        CategoryDTO apiCategory = new CategoryDTO();
 
-        dto.setId(UUID.fromString(category.getId()));
-        dto.setName(category.getName());
-        dto.setColor(category.getColor());
-        dto.setIcon(category.getIcon());
+        apiCategory.setId(UUID.fromString(category.getId()));
+        apiCategory.setName(category.getName());
+        apiCategory.setColor(category.getColor());
+        apiCategory.setIcon(category.getIcon());
 
         if (category.getParentCategoryId() != null) {
-            dto.setParentCategoryId(UUID.fromString(category.getParentCategoryId().toString()));
+            apiCategory.setParentCategoryId(UUID.fromString(category.getParentCategoryId().toString()));
         }
 
-        return dto;
+        return apiCategory;
     }
 
     /**
@@ -174,7 +174,7 @@ public class AppMapper {
         // Criar um CategorySummary para cada categoria
         return transactionsByCategory.values().stream()
                 .map(transactions -> {
-                    Category category = transactions.get(0).getCategory(); // Pegar categoria do primeiro item
+                    Category category = transactions.get(0).getCategory();
 
                     double totalAmount = transactions.stream()
                             .mapToDouble(t -> t.getAmount().doubleValue())
@@ -185,7 +185,7 @@ public class AppMapper {
                     double averageAmount = transactionCount > 0 ? totalAmount / transactionCount : 0;
 
                     CategorySummary summary = new CategorySummary();
-                    summary.setCategoryDTO(mapCategory(category));
+                    summary.setCategory(mapCategory(category));
                     summary.setTotalAmount(totalAmount);
                     summary.setTransactionCount(transactionCount);
                     summary.setPercentage(percentage);
