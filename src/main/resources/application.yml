@@ -1,7 +1,8 @@
 server:
   port: 8080
   servlet:
-    context-path: /api/v1
+    context-path: /api/v1 # http://localhost:8080/api/v1/swagger-ui/index.html
+
 
 spring:
   application:
@@ -68,7 +69,7 @@ app:
     confidence-threshold: 0.7
 
 ---
-# Profile para Produção
+# Profile para Produï¿½ï¿½o
 spring:
   config:
     activate:

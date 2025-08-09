@@ -3,7 +3,7 @@ package br.com.iagoomes.financialcontrol.infra.dataprovider;
 import br.com.iagoomes.financialcontrol.domain.ExtractProvider;
 import br.com.iagoomes.financialcontrol.domain.entity.BankType;
 import br.com.iagoomes.financialcontrol.domain.entity.Extract;
-import br.com.iagoomes.financialcontrol.domain.mapper.DomainMapper;
+import br.com.iagoomes.financialcontrol.domain.mapper.ExtractMapper;
 import br.com.iagoomes.financialcontrol.infra.repository.ExtractDataRepository;
 import br.com.iagoomes.financialcontrol.infra.repository.entity.ExtractData;
 import lombok.RequiredArgsConstructor;
@@ -17,14 +17,14 @@ import java.util.Optional;
 public class ExtractDataProvider implements ExtractProvider {
 
     private final ExtractDataRepository extractRepository;
-    private final DomainMapper domainMapper;
+    private final ExtractMapper extractMapper;
 
     @Override
     public Optional<Extract> findByBankAndPeriod(BankType bankType, Integer month, Integer year) {
         Optional<ExtractData> extractData = extractRepository.findByBankAndReferenceMonthAndReferenceYear(
                 bankType, month, year);
 
-        return extractData.map(domainMapper::toExtractDomain);
+        return extractData.map(extractMapper::toExtractDomain);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class ExtractDataProvider implements ExtractProvider {
         List<ExtractData> extractDataList = extractRepository.findByBank(bankType);
 
         return extractDataList.stream()
-                .map(domainMapper::toExtractDomain)
+                .map(extractMapper::toExtractDomain)
                 .toList();
     }
 
@@ -41,7 +41,7 @@ public class ExtractDataProvider implements ExtractProvider {
         List<ExtractData> extractDataList = extractRepository.findByReferenceYear(year);
 
         return extractDataList.stream()
-                .map(domainMapper::toExtractDomain)
+                .map(extractMapper::toExtractDomain)
                 .toList();
     }
 
@@ -50,7 +50,7 @@ public class ExtractDataProvider implements ExtractProvider {
         List<ExtractData> extractDataList = extractRepository.findAll();
 
         return extractDataList.stream()
-                .map(domainMapper::toExtractDomain)
+                .map(extractMapper::toExtractDomain)
                 .toList();
     }
 
@@ -58,13 +58,13 @@ public class ExtractDataProvider implements ExtractProvider {
     public Optional<Extract> findByIdWithTransactions(String extractId) {
         Optional<ExtractData> extractData = extractRepository.findByIdWithTransactions(extractId);
 
-        return extractData.map(domainMapper::toExtractDomain);
+        return extractData.map(extractMapper::toExtractDomain);
     }
 
     @Override
     public Extract save(Extract extract) {
-        ExtractData extractData = domainMapper.toExtractData(extract);
+        ExtractData extractData = extractMapper.toExtractData(extract);
         ExtractData savedExtractData = extractRepository.save(extractData);
-        return domainMapper.toExtractDomain(savedExtractData);
+        return extractMapper.toExtractDomain(savedExtractData);
     }
 }
