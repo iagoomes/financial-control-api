@@ -3,8 +3,6 @@ package br.com.iagoomes.financialcontrol.infra.strategy;
 import br.com.iagoomes.financialcontrol.domain.entity.Extract;
 import br.com.iagoomes.financialcontrol.domain.entity.Transaction;
 import br.com.iagoomes.financialcontrol.domain.entity.TransactionType;
-import br.com.iagoomes.financialcontrol.domain.entity.Category;
-import br.com.iagoomes.financialcontrol.app.service.CategoryService;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
@@ -22,7 +20,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Service for processing Nubank CSV files with automatic categorization
@@ -33,8 +30,6 @@ import java.util.Optional;
 public class NubankCsvProcessor implements FileProcessorStrategy {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-    private final CategoryService categoryService;
 
     @Override
     public Extract processFile(MultipartFile file, Integer month, Integer year) {
@@ -112,19 +107,7 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
         TransactionType transactionType = determineTransactionType(title, amount);
 
         // Create transaction
-        Transaction transaction = Transaction.create(date, title, amount, title, transactionType);
-
-        // Auto-categorize transaction using category service
-        Optional<Category> category = categoryService.categorizeTransaction(title, amount);
-        if (category.isPresent()) {
-            transaction.setCategory(category.get());
-            transaction.setConfidence(BigDecimal.valueOf(0.85)); // 85% confidence for auto-categorization
-            log.debug("Auto-categorized '{}' as '{}'", title, category.get().getName());
-        } else {
-            transaction.setConfidence(BigDecimal.valueOf(0.0)); // No categorization
-        }
-
-        return transaction;
+        return Transaction.create(date, title, amount, title, transactionType);
     }
 
     private TransactionType determineTransactionType(String title, BigDecimal amount) {

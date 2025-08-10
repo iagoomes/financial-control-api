@@ -106,7 +106,7 @@ public class CategorizeTransactionUseCase {
                 title.contains("ifood") || title.contains("uber eats") ||
                 title.contains("delivery") || title.contains("hamburgueria") ||
                 title.contains("sushi") || title.contains("gratin") ||
-                title.contains("au gratin") || title.contains("casa verde");
+                title.contains("au gratin");
     }
 
     private boolean isTransportation(String title) {

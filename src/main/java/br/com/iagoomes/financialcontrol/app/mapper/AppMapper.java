@@ -126,7 +126,7 @@ public class AppMapper {
 
         // Set category if available
         if (transaction.getCategory() != null) {
-            apiTransaction.setCategory(mapCategory(transaction.getCategory()));
+            apiTransaction.setCategory(toCategoryDTO(transaction.getCategory()));
         }
 
         // Set confidence if available
@@ -140,7 +140,7 @@ public class AppMapper {
     /**
      * Map Category entity to API Category model
      */
-    private CategoryDTO mapCategory(Category category) {
+    public CategoryDTO toCategoryDTO(Category category) {
         CategoryDTO apiCategory = new CategoryDTO();
 
         apiCategory.setId(UUID.fromString(category.getId()));
@@ -185,7 +185,7 @@ public class AppMapper {
                     double averageAmount = transactionCount > 0 ? totalAmount / transactionCount : 0;
 
                     CategorySummary summary = new CategorySummary();
-                    summary.setCategory(mapCategory(category));
+                    summary.setCategory(toCategoryDTO(category));
                     summary.setTotalAmount(totalAmount);
                     summary.setTransactionCount(transactionCount);
                     summary.setPercentage(percentage);
