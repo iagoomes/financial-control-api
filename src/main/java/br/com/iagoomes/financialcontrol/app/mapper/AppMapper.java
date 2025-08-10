@@ -115,7 +115,7 @@ public class AppMapper {
     /**
      * Map single Transaction entity to API Transaction model
      */
-    private TransactionDTO mapTransaction(Transaction transaction) {
+    public TransactionDTO mapTransaction(Transaction transaction) {
         TransactionDTO apiTransaction = new TransactionDTO();
 
         apiTransaction.setId(UUID.fromString(transaction.getId()));
