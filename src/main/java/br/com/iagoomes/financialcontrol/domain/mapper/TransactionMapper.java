@@ -46,5 +46,20 @@ public class TransactionMapper {
                 .category(categoryMapper.toCategoryData(transaction.getCategory()))
                 .build();
     }
-}
 
+    /**
+     * Update existing TransactionData with values from Transaction domain entity
+     */
+    public void updateTransactionData(TransactionData transactionData, Transaction transaction) {
+        if (transactionData == null || transaction == null) {
+            return;
+        }
+
+        transactionData.setDate(transaction.getDate());
+        transactionData.setTitle(transaction.getTitle());
+        transactionData.setAmount(transaction.getAmount());
+        transactionData.setOriginalDescription(transaction.getOriginalDescription());
+        transactionData.setTransactionType(transaction.getTransactionType());
+        transactionData.setConfidence(transaction.getConfidence());
+    }
+}
