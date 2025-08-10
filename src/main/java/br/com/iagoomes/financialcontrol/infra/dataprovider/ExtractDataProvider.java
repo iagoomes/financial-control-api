@@ -8,6 +8,7 @@ import br.com.iagoomes.financialcontrol.infra.repository.ExtractDataRepository;
 import br.com.iagoomes.financialcontrol.infra.repository.entity.ExtractData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -66,5 +67,15 @@ public class ExtractDataProvider implements ExtractProvider {
         ExtractData extractData = extractMapper.toExtractData(extract);
         ExtractData savedExtractData = extractRepository.save(extractData);
         return extractMapper.toExtractDomain(savedExtractData);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Extract> findByPeriod(Integer year, Integer month) {
+        List<ExtractData> extractDataList = extractRepository.findByReferenceYearAndReferenceMonth(year, month);
+
+        return extractDataList.stream()
+                .map(extractMapper::toExtractDomain)
+                .toList();
     }
 }
