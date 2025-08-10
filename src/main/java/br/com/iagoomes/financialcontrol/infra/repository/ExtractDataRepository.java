@@ -41,4 +41,10 @@ public interface ExtractDataRepository extends JpaRepository<ExtractData, String
     @Query("SELECT e FROM ExtractData e LEFT JOIN FETCH e.transactions WHERE e.id = :extractId")
     Optional<ExtractData> findByIdWithTransactions(@Param("extractId") String extractId);
 
+    /**
+     * Find extracts by specific year and month
+     */
+    @EntityGraph(attributePaths = {"transactions"})
+    List<ExtractData> findByReferenceYearAndReferenceMonth(Integer referenceYear, Integer referenceMonth);
+
 }
