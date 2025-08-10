@@ -201,7 +201,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MonthlyReport'
+                $ref: '#/components/schemas/MonthlyReportDTO'
 
 components:
   schemas:
@@ -216,7 +216,7 @@ components:
           type: string
           enum: [NUBANK, ITAU, BRADESCO, SANTANDER, CAIXA, BB]
         period:
-          $ref: '#/components/schemas/Period'
+          $ref: '#/components/schemas/PeriodDTO'
         summary:
           $ref: '#/components/schemas/FinancialSummary'
         transactions:
@@ -362,7 +362,7 @@ components:
         - transactionCount
         - percentage
 
-    Period:
+    PeriodDTO:
       type: object
       properties:
         month:
@@ -397,7 +397,7 @@ components:
           type: string
           enum: [NUBANK, ITAU, BRADESCO, SANTANDER, CAIXA, BB]
         period:
-          $ref: '#/components/schemas/Period'
+          $ref: '#/components/schemas/PeriodDTO'
         totalExpenses:
           type: number
           format: double
@@ -428,11 +428,11 @@ components:
       required:
         - categoryId
 
-    MonthlyReport:
+    MonthlyReportDTO:
       type: object
       properties:
         period:
-          $ref: '#/components/schemas/Period'
+          $ref: '#/components/schemas/PeriodDTO'
         summary:
           $ref: '#/components/schemas/FinancialSummary'
         categoryBreakdown:
@@ -442,14 +442,14 @@ components:
         dailyExpenses:
           type: array
           items:
-            $ref: '#/components/schemas/DailyExpense'
+            $ref: '#/components/schemas/DailyExpenseDTO'
         topExpenses:
           type: array
           items:
             $ref: '#/components/schemas/TransactionDTO'
           maxItems: 10
 
-    DailyExpense:
+    DailyExpenseDTO:
       type: object
       properties:
         date:

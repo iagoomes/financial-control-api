@@ -1,13 +1,15 @@
 package br.com.iagoomes.financialcontrol.app.service;
 
 import br.com.iagoomes.financialcontrol.app.mapper.AppMapper;
+import br.com.iagoomes.financialcontrol.domain.entity.DailyExpense;
+import br.com.iagoomes.financialcontrol.domain.entity.MonthlyReport;
 import br.com.iagoomes.financialcontrol.domain.entity.Transaction;
 import br.com.iagoomes.financialcontrol.domain.usecase.GenerateMonthlyReportUseCase;
 import br.com.iagoomes.financialcontrol.model.CategorySummary;
-import br.com.iagoomes.financialcontrol.model.DailyExpense;
+import br.com.iagoomes.financialcontrol.model.DailyExpenseDTO;
 import br.com.iagoomes.financialcontrol.model.FinancialSummary;
-import br.com.iagoomes.financialcontrol.model.MonthlyReport;
-import br.com.iagoomes.financialcontrol.model.Period;
+import br.com.iagoomes.financialcontrol.model.MonthlyReportDTO;
+import br.com.iagoomes.financialcontrol.model.PeriodDTO;
 import br.com.iagoomes.financialcontrol.model.TransactionDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,15 +38,15 @@ public class ReportService {
     /**
      * Generate monthly report for the specified period
      */
-    public MonthlyReport getMonthlyReport(Integer year, Integer month) {
+    public MonthlyReportDTO getMonthlyReport(Integer year, Integer month) {
         log.info("Service: Generating monthly report for {}/{}", month, year);
 
         // Execute use case
-        GenerateMonthlyReportUseCase.MonthlyReportData reportData =
+        MonthlyReport reportData =
                 generateMonthlyReportUseCase.execute(year, month);
 
         // Map to DTO
-        MonthlyReport monthlyReport = new MonthlyReport();
+        MonthlyReportDTO monthlyReport = new MonthlyReportDTO();
 
         monthlyReport.setPeriod(createPeriod(month, year));
         monthlyReport.setSummary(createFinancialSummary(reportData));
@@ -57,8 +59,8 @@ public class ReportService {
         return monthlyReport;
     }
 
-    private Period createPeriod(Integer month, Integer year) {
-        Period period = new Period();
+    private PeriodDTO createPeriod(Integer month, Integer year) {
+        PeriodDTO period = new PeriodDTO();
         period.setMonth(month);
         period.setYear(year);
 
@@ -71,7 +73,7 @@ public class ReportService {
         return period;
     }
 
-    private FinancialSummary createFinancialSummary(GenerateMonthlyReportUseCase.MonthlyReportData reportData) {
+    private FinancialSummary createFinancialSummary(MonthlyReport reportData) {
         FinancialSummary summary = new FinancialSummary();
 
         summary.setTotalIncome(reportData.getTotalIncome().doubleValue());
@@ -135,10 +137,10 @@ public class ReportService {
                 .toList();
     }
 
-    private List<DailyExpense> mapDailyExpenses(List<GenerateMonthlyReportUseCase.DailyExpenseData> dailyExpenseData) {
+    private List<DailyExpenseDTO> mapDailyExpenses(List<DailyExpense> dailyExpenseData) {
         return dailyExpenseData.stream()
                 .map(data -> {
-                    DailyExpense dailyExpense = new DailyExpense();
+                    DailyExpenseDTO dailyExpense = new DailyExpenseDTO();
                     dailyExpense.setDate(Date.from(data.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
                     dailyExpense.setTotalAmount(data.getTotalAmount().doubleValue());
                     dailyExpense.setTransactionCount(data.getTransactionCount());
