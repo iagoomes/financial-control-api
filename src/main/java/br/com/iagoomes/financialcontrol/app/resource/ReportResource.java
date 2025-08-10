@@ -29,22 +29,6 @@ public class ReportResource implements ReportsApiDelegate {
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // Validate parameters
-                if (year == null || month == null) {
-                    log.warn("Invalid parameters: year={}, month={}", year, month);
-                    return ResponseEntity.badRequest().build();
-                }
-
-                if (month < 1 || month > 12) {
-                    log.warn("Invalid month: {}", month);
-                    return ResponseEntity.badRequest().build();
-                }
-
-                if (year < 2020 || year > 2030) {
-                    log.warn("Invalid year: {}", year);
-                    return ResponseEntity.badRequest().build();
-                }
-
                 // Generate report
                 MonthlyReportDTO monthlyReport = reportService.getMonthlyReport(year, month);
 

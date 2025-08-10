@@ -72,6 +72,7 @@ public class ExtractService {
      * Validate upload parameters
      */
     private void validateUploadParameters(MultipartFile file, String bank, Integer month, Integer year) {
+        //todo: retirar pois já está sendo validado na classe generated API
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File is required");
         }

@@ -44,8 +44,8 @@ paths:
                   example: 7
                 year:
                   type: integer
-                  minimum: 2020
-                  maximum: 2030
+                  minimum: 2015
+                  maximum: 2040
                   description: Ano de referência do extrato
                   example: 2025
       responses:
@@ -188,6 +188,8 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 2015
+            maximum: 2040
         - name: month
           in: query
           required: true
