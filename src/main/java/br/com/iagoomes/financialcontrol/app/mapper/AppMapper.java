@@ -1,15 +1,15 @@
 package br.com.iagoomes.financialcontrol.app.mapper;
 
-import br.com.iagoomes.financialcontrol.infra.repository.entity.CategoryData;
-import br.com.iagoomes.financialcontrol.infra.repository.entity.ExtractData;
-import br.com.iagoomes.financialcontrol.infra.repository.entity.TransactionData;
-import br.com.iagoomes.financialcontrol.model.Category;
+import br.com.iagoomes.financialcontrol.domain.entity.Category;
+import br.com.iagoomes.financialcontrol.domain.entity.Extract;
+import br.com.iagoomes.financialcontrol.domain.entity.Transaction;
+import br.com.iagoomes.financialcontrol.model.CategoryDTO;
 import br.com.iagoomes.financialcontrol.model.CategorySummary;
 import br.com.iagoomes.financialcontrol.model.ExtractAnalysisResponse;
 import br.com.iagoomes.financialcontrol.model.ExtractSummary;
 import br.com.iagoomes.financialcontrol.model.FinancialSummary;
 import br.com.iagoomes.financialcontrol.model.Period;
-import br.com.iagoomes.financialcontrol.model.Transaction;
+import br.com.iagoomes.financialcontrol.model.TransactionDTO;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -17,21 +17,22 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Mapper between JPA entities and OpenAPI generated DTOs
  */
 @Component
-public class ExtractMapper {
+public class AppMapper {
 
     /**
      * Convert Extract entity to ExtractAnalysisResponse DTO
      */
-    public ExtractAnalysisResponse toExtractAnalysisResponse(ExtractData extract) {
+    public ExtractAnalysisResponse toExtractAnalysisResponse(Extract extract) {
         ExtractAnalysisResponse response = new ExtractAnalysisResponse();
 
-        // Set basic fields
         response.setId(UUID.fromString(extract.getId()));
         response.setBank(ExtractAnalysisResponse.BankEnum.fromValue(extract.getBank().name()));
         response.setPeriod(createPeriod(extract.getReferenceMonth(), extract.getReferenceYear()));
@@ -46,7 +47,7 @@ public class ExtractMapper {
     /**
      * Convert Extract entity to ExtractSummary DTO
      */
-    public ExtractSummary toExtractSummary(ExtractData extract) {
+    public ExtractSummary toExtractSummary(Extract extract) {
         ExtractSummary summary = new ExtractSummary();
 
         summary.setId(UUID.fromString(extract.getId()));
@@ -68,7 +69,6 @@ public class ExtractMapper {
         period.setMonth(month);
         period.setYear(year);
 
-        // Calcular datas de início e fim
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
@@ -81,19 +81,17 @@ public class ExtractMapper {
     /**
      * Create FinancialSummary DTO
      */
-    private FinancialSummary createFinancialSummary(ExtractData extract) {
+    private FinancialSummary createFinancialSummary(Extract extract) {
         FinancialSummary summary = new FinancialSummary();
 
         summary.setTotalIncome(extract.getTotalIncome().doubleValue());
         summary.setTotalExpenses(extract.getTotalExpenses().doubleValue());
 
-        // Calculate net amount (income - expenses)
         BigDecimal netAmount = extract.getTotalIncome().subtract(extract.getTotalExpenses());
         summary.setNetAmount(netAmount.doubleValue());
 
         summary.setTransactionCount(extract.getTransactionCount());
 
-        // Calculate average transaction value
         if (extract.getTransactionCount() > 0) {
             BigDecimal totalAmount = extract.getTotalIncome().add(extract.getTotalExpenses());
             BigDecimal average = totalAmount.divide(BigDecimal.valueOf(extract.getTransactionCount()), 2, BigDecimal.ROUND_HALF_UP);
@@ -108,61 +106,93 @@ public class ExtractMapper {
     /**
      * Map Transaction entities to Transaction DTOs
      */
-    private List<Transaction> mapTransactions(List<TransactionData> transactions) {
+    private List<TransactionDTO> mapTransactions(List<Transaction> transactions) {
         return transactions.stream()
                 .map(this::mapTransaction)
                 .toList();
     }
 
     /**
-     * Map single Transaction entity to Transaction DTO
+     * Map single Transaction entity to API Transaction model
      */
-    private Transaction mapTransaction(TransactionData transaction) {
-        Transaction dto = new Transaction();
+    private TransactionDTO mapTransaction(Transaction transaction) {
+        TransactionDTO apiTransaction = new TransactionDTO();
 
-        dto.setId(UUID.fromString(transaction.getId()));
-        dto.setDate(transaction.getDate());
-        dto.setTitle(transaction.getTitle());
-        dto.setAmount(transaction.getAmount().doubleValue());
-        dto.setOriginalDescription(transaction.getOriginalDescription());
+        apiTransaction.setId(UUID.fromString(transaction.getId()));
+        apiTransaction.setDate(transaction.getDate());
+        apiTransaction.setTitle(transaction.getTitle());
+        apiTransaction.setAmount(transaction.getAmount().doubleValue());
+        apiTransaction.setOriginalDescription(transaction.getOriginalDescription());
 
         // Set category if available
         if (transaction.getCategory() != null) {
-            dto.setCategory(mapCategory(transaction.getCategory()));
+            apiTransaction.setCategory(toCategoryDTO(transaction.getCategory()));
         }
 
         // Set confidence if available
         if (transaction.getConfidence() != null) {
-            dto.setConfidence(transaction.getConfidence().doubleValue());
+            apiTransaction.setConfidence(transaction.getConfidence().doubleValue());
         }
 
-        return dto;
+        return apiTransaction;
     }
 
     /**
-     * Map Category entity to Category DTO
+     * Map Category entity to API Category model
      */
-    private Category mapCategory(CategoryData category) {
-        Category dto = new Category();
+    public CategoryDTO toCategoryDTO(Category category) {
+        CategoryDTO apiCategory = new CategoryDTO();
 
-        dto.setId(UUID.fromString(category.getId()));
-        dto.setName(category.getName());
-        dto.setColor(category.getColor());
-        dto.setIcon(category.getIcon());
+        apiCategory.setId(UUID.fromString(category.getId()));
+        apiCategory.setName(category.getName());
+        apiCategory.setColor(category.getColor());
+        apiCategory.setIcon(category.getIcon());
 
         if (category.getParentCategoryId() != null) {
-            dto.setParentCategoryId(UUID.fromString(category.getParentCategoryId()));
+            apiCategory.setParentCategoryId(UUID.fromString(category.getParentCategoryId().toString()));
         }
 
-        return dto;
+        return apiCategory;
     }
 
     /**
      * Create category breakdown (placeholder - implement based on business logic)
      */
-    private List<CategorySummary> createCategoryBreakdown(ExtractData extract) {
-        // For now, return empty list
-        // TODO: Implement category breakdown logic
-        return List.of();
+    private List<CategorySummary> createCategoryBreakdown(Extract extract) {
+        if (extract.getTransactions().isEmpty()) {
+            return List.of();
+        }
+
+        // Calcular total de gastos para percentuais
+        double totalExpenses = extract.getTotalExpenses().doubleValue();
+
+        // Agrupar transações por ID da categoria
+        Map<String, List<Transaction>> transactionsByCategory = extract.getTransactions().stream()
+                .filter(t -> t.getCategory() != null)
+                .collect(Collectors.groupingBy(t -> t.getCategory().getId()));
+
+        // Criar um CategorySummary para cada categoria
+        return transactionsByCategory.values().stream()
+                .map(transactions -> {
+                    Category category = transactions.get(0).getCategory();
+
+                    double totalAmount = transactions.stream()
+                            .mapToDouble(t -> t.getAmount().doubleValue())
+                            .sum();
+
+                    int transactionCount = transactions.size();
+                    double percentage = totalExpenses > 0 ? (totalAmount / totalExpenses) * 100 : 0;
+                    double averageAmount = transactionCount > 0 ? totalAmount / transactionCount : 0;
+
+                    CategorySummary summary = new CategorySummary();
+                    summary.setCategory(toCategoryDTO(category));
+                    summary.setTotalAmount(totalAmount);
+                    summary.setTransactionCount(transactionCount);
+                    summary.setPercentage(percentage);
+                    summary.setAverageAmount(averageAmount);
+
+                    return summary;
+                })
+                .toList();
     }
 }

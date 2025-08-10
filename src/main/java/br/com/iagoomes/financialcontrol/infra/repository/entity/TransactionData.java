@@ -60,24 +60,4 @@ public class TransactionData {
     @Column(name = "confidence", precision = 3, scale = 2)
     private BigDecimal confidence;
 
-    /**
-     * Determines if transaction is income (negative amount) or expense (positive amount)
-     */
-    public boolean isIncome() {
-        return amount.compareTo(BigDecimal.ZERO) < 0;
-    }
-
-    /**
-     * Determines if transaction is expense (positive amount)
-     */
-    public boolean isExpense() {
-        return amount.compareTo(BigDecimal.ZERO) > 0;
-    }
-
-    /**
-     * Gets absolute value of amount
-     */
-    public BigDecimal getAbsoluteAmount() {
-        return amount.abs();
-    }
 }

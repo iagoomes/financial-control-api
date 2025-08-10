@@ -1,96 +1,98 @@
 package br.com.iagoomes.financialcontrol.app.service;
 
+import br.com.iagoomes.financialcontrol.app.mapper.AppMapper;
 import br.com.iagoomes.financialcontrol.domain.entity.BankType;
-import br.com.iagoomes.financialcontrol.infra.repository.ExtractDataRepository;
-import br.com.iagoomes.financialcontrol.infra.repository.entity.ExtractData;
-import jakarta.transaction.Transactional;
+import br.com.iagoomes.financialcontrol.domain.entity.Extract;
+import br.com.iagoomes.financialcontrol.domain.usecase.ProcessExtractFileUseCase;
+import br.com.iagoomes.financialcontrol.domain.usecase.GetExtractByIdUseCase;
+import br.com.iagoomes.financialcontrol.domain.usecase.ListExtractsUseCase;
+import br.com.iagoomes.financialcontrol.model.ExtractAnalysisResponse;
+import br.com.iagoomes.financialcontrol.model.ExtractSummary;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+/**
+ * Application Service - Orchestrates Use Cases and handles DTOs
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ExtractService {
 
-    private final ExtractDataRepository extractRepository;
+    private final ProcessExtractFileUseCase processExtractFileUseCase;
+    private final GetExtractByIdUseCase getExtractByIdUseCase;
+    private final ListExtractsUseCase listExtractsUseCase;
+    private final AppMapper appMapper;
 
     /**
-     * Save extract to database
+     * Process extract file upload
      */
-    @Transactional
-    public ExtractData saveExtract(ExtractData extract) {
-        log.info("Saving extract for bank {} - {}/{}",
-                extract.getBank(), extract.getReferenceMonth(), extract.getReferenceYear());
+    public ExtractAnalysisResponse processExtractFile(MultipartFile file, String bank, Integer month, Integer year) {
+        log.info("Processing extract file: bank={}, month={}, year={}", bank, month, year);
 
-        // Check if extract already exists for same bank/month/year
-        Optional<ExtractData> existingExtract = extractRepository
-                .findByBankAndReferenceMonthAndReferenceYear(
-                        extract.getBank(),
-                        extract.getReferenceMonth(),
-                        extract.getReferenceYear());
+        validateUploadParameters(file, bank, month, year);
 
-        if (existingExtract.isPresent()) {
-            log.warn("Extract already exists for bank {} - {}/{}",
-                    extract.getBank(), extract.getReferenceMonth(), extract.getReferenceYear());
-            throw new IllegalStateException("Extract already exists for this bank and period");
+        BankType bankType = BankType.valueOf(bank.toUpperCase());
+        Extract extract = processExtractFileUseCase.execute(file, bankType, month, year);
+
+        return appMapper.toExtractAnalysisResponse(extract);
+    }
+
+    /**
+     * Get extract by ID
+     */
+    public Optional<ExtractAnalysisResponse> getExtractById(UUID extractId) {
+        log.info("Getting extract by ID: {}", extractId);
+
+        Optional<Extract> extract = getExtractByIdUseCase.execute(extractId.toString());
+        return extract.map(appMapper::toExtractAnalysisResponse);
+    }
+
+    /**
+     * List extracts with filters
+     */
+    public List<ExtractSummary> listExtracts(String bank, Integer year, Integer month) {
+        log.info("Listing extracts with filters - bank: {}, year: {}, month: {}", bank, year, month);
+
+        BankType bankType = bank != null ? BankType.valueOf(bank.toUpperCase()) : null;
+        List<Extract> extracts = listExtractsUseCase.execute(bankType, year, month);
+
+        return extracts.stream()
+                .map(appMapper::toExtractSummary)
+                .toList();
+    }
+
+    /**
+     * Validate upload parameters
+     */
+    private void validateUploadParameters(MultipartFile file, String bank, Integer month, Integer year) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File is required");
         }
 
-        ExtractData savedExtract = extractRepository.save(extract);
-        log.info("Successfully saved extract with ID: {}", savedExtract.getId());
+        if (bank == null || bank.trim().isEmpty()) {
+            throw new IllegalArgumentException("Bank is required");
+        }
 
-        return savedExtract;
-    }
+        if (month == null || month < 1 || month > 12) {
+            throw new IllegalArgumentException("Month must be between 1 and 12");
+        }
 
-    /**
-     * Find extract by ID
-     */
-    @Transactional
-    public Optional<ExtractData> findById(String id) {
-        return extractRepository.findById(id);
-    }
+        if (year == null || year < 2020 || year > 2030) {
+            throw new IllegalArgumentException("Year must be between 2020 and 2030");
+        }
 
-    /**
-     * Find extracts by bank
-     */
-    public List<ExtractData> findByBank(BankType bank) {
-        return extractRepository.findByBankOrderByProcessedAtDesc(bank);
-    }
-
-    /**
-     * Find extracts by year
-     */
-    public List<ExtractData> findByYear(Integer year) {
-        return extractRepository.findByReferenceYearOrderByReferenceMonthDesc(year);
-    }
-
-    /**
-     * Find all extracts
-     */
-    public List<ExtractData> findAll() {
-        return extractRepository.findAllByOrderByProcessedAtDesc();
-    }
-
-    public Optional<ExtractData> findByBankAndPeriod(BankType bank, Integer month, Integer year) {
-        return extractRepository.findByBankAndReferenceMonthAndReferenceYear(bank, month, year);
-    }
-
-    /**
-     * Find extracts by year and month range
-     */
-    public List<ExtractData> findByYearAndMonthRange(Integer year, Integer startMonth, Integer endMonth) {
-        return extractRepository.findByYearAndMonthRange(year, startMonth, endMonth);
-    }
-
-    /**
-     * Delete extract by ID
-     */
-    @Transactional
-    public void deleteById(String id) {
-        log.info("Deleting extract with ID: {}", id);
-        extractRepository.deleteById(id);
+        // Validate bank type
+        try {
+            BankType.valueOf(bank.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid bank type: " + bank);
+        }
     }
 }

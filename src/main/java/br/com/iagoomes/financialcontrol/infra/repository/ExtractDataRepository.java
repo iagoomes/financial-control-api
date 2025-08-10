@@ -19,16 +19,6 @@ public interface ExtractDataRepository extends JpaRepository<ExtractData, String
     Optional<ExtractData> findById(String id);
 
     /**
-     * Find extracts by bank type
-     */
-    List<ExtractData> findByBankOrderByProcessedAtDesc(BankType bank);
-
-    /**
-     * Find extracts by year
-     */
-    List<ExtractData> findByReferenceYearOrderByReferenceMonthDesc(Integer year);
-
-    /**
      * Find extract by bank, month and year
      */
     Optional<ExtractData> findByBankAndReferenceMonthAndReferenceYear(
@@ -44,8 +34,11 @@ public interface ExtractDataRepository extends JpaRepository<ExtractData, String
                                               @Param("startMonth") Integer startMonth,
                                               @Param("endMonth") Integer endMonth);
 
-    /**
-     * Get all extracts ordered by most recent
-     */
-    List<ExtractData> findAllByOrderByProcessedAtDesc();
+    List<ExtractData> findByBank(BankType bankType);
+
+    List<ExtractData> findByReferenceYear(Integer referenceYear);
+
+    @Query("SELECT e FROM ExtractData e LEFT JOIN FETCH e.transactions WHERE e.id = :extractId")
+    Optional<ExtractData> findByIdWithTransactions(@Param("extractId") String extractId);
+
 }
