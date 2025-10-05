@@ -78,7 +78,7 @@ class ReportResourceTest {
         assertNotNull(monthlyReport.getTopExpenses());
         assertTrue(monthlyReport.getTopExpenses().isEmpty());
     }
-    
+
 
     @Test
     void shouldReturn200ForValidParameters() throws Exception {
