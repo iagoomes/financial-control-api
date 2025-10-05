@@ -1,9 +1,12 @@
 package br.com.iagoomes.financialcontrol.app.resource;
 
 import br.com.iagoomes.financialcontrol.app.service.ExtractService;
+import br.com.iagoomes.financialcontrol.model.CategoryDTO;
+import br.com.iagoomes.financialcontrol.model.CategorySummary;
 import br.com.iagoomes.financialcontrol.model.ExtractAnalysisResponse;
 import br.com.iagoomes.financialcontrol.model.FinancialSummary;
-import br.com.iagoomes.financialcontrol.model.Period;
+import br.com.iagoomes.financialcontrol.model.PeriodDTO;
+import br.com.iagoomes.financialcontrol.model.TransactionDTO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +21,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -128,7 +133,7 @@ class ExtractionResourceIntegrationTest {
         // Valida categoryBreakdown
         JsonNode categoryBreakdown = jsonNode.get("categoryBreakdown");
         assertTrue(categoryBreakdown.isArray());
-        assertTrue(categoryBreakdown.size() > 0);
+        assertTrue(!categoryBreakdown.isEmpty());
 
         for (JsonNode categoryItem : categoryBreakdown) {
             assertCategoryBreakdownStructure(categoryItem);
@@ -230,12 +235,16 @@ class ExtractionResourceIntegrationTest {
         ExtractAnalysisResponse response = new ExtractAnalysisResponse();
 
         // Configurar período
-        Period period = new Period();
+        PeriodDTO period = new PeriodDTO();
         period.setMonth(7);
         period.setYear(2025);
         response.setPeriod(period);
 
-        // Configurar summary - usando apenas campos disponíveis em FinancialSummary
+        // Criar transações baseadas no CSV
+        List<TransactionDTO> transactions = createMockTransactions();
+        response.setTransactions(transactions);
+
+        // Configurar summary
         double totalExpenses = 612.15;
         double totalIncome = 4000.00;
         double netAmount = totalIncome - totalExpenses;
@@ -250,6 +259,10 @@ class ExtractionResourceIntegrationTest {
 
         response.setSummary(summary);
 
+        // Criar breakdown de categorias usando CategorySummary
+        List<CategorySummary> categoryBreakdown = createMockCategoryBreakdown();
+        response.setCategoryBreakdown(categoryBreakdown);
+
         // Configurar bank
         response.setBank(ExtractAnalysisResponse.BankEnum.NUBANK);
 
@@ -258,6 +271,101 @@ class ExtractionResourceIntegrationTest {
         response.setProcessedAt(new Date());
 
         return response;
+    }
+
+    private List<TransactionDTO> createMockTransactions() {
+        List<TransactionDTO> transactions = new ArrayList<>();
+
+        // Criar transações baseadas no CSV test-extract-nubank-2025-07.csv
+        transactions.add(createTransactionDTO("2025-07-30", "Mercado Central", 45.50, "Alimentação"));
+        transactions.add(createTransactionDTO("2025-07-29", "Uber", 18.00, "Transporte"));
+        transactions.add(createTransactionDTO("2025-07-29", "Restaurante Villa", 85.40, "Alimentação"));
+        transactions.add(createTransactionDTO("2025-07-27", "Farmacia Drogasil", 35.75, "Saúde"));
+        transactions.add(createTransactionDTO("2025-07-27", "Cinema Multiplex", 60.00, "Entretenimento"));
+        transactions.add(createTransactionDTO("2025-07-25", "Posto Shell", 120.00, "Transporte"));
+        transactions.add(createTransactionDTO("2025-07-23", "Padaria do Bairro", 22.80, "Alimentação"));
+        transactions.add(createTransactionDTO("2025-07-22", "Supermercado Extra", 156.90, "Alimentação"));
+        transactions.add(createTransactionDTO("2025-07-20", "99 Taxi", 25.50, "Transporte"));
+        transactions.add(createTransactionDTO("2025-07-18", "Lanchonete do João", 42.30, "Alimentação"));
+        transactions.add(createTransactionDTO("2025-07-15", "Transferencia PIX", -500.00, "Transferência"));
+        transactions.add(createTransactionDTO("2025-07-10", "Salario", -3500.00, "Renda"));
+
+        return transactions;
+    }
+
+    private TransactionDTO createTransactionDTO(String date, String title, double amount, String categoryName) {
+        TransactionDTO transaction = new TransactionDTO();
+        transaction.setId(UUID.randomUUID());
+        transaction.setDate(java.sql.Date.valueOf(date));
+        transaction.setTitle(title);
+        transaction.setAmount(amount);
+        transaction.setOriginalDescription(title);
+        transaction.setConfidence(0.95);
+
+        // Criar categoria
+        CategoryDTO category = new CategoryDTO();
+        category.setId(UUID.randomUUID());
+        category.setName(categoryName);
+        category.setColor(getCategoryColor(categoryName));
+        category.setIcon(getCategoryIcon(categoryName));
+        transaction.setCategory(category);
+
+        return transaction;
+    }
+
+    private List<CategorySummary> createMockCategoryBreakdown() {
+        List<CategorySummary> breakdown = new ArrayList<>();
+
+        // Valores calculados baseados no CSV test-extract-nubank-2025-07.csv
+        breakdown.add(createCategorySummary("Alimentação", 352.90, "#4CAF50", "🍽️", 5));  // 45.50 + 85.40 + 22.80 + 156.90 + 42.30
+        breakdown.add(createCategorySummary("Transporte", 163.50, "#2196F3", "🚗", 3));   // 18.00 + 120.00 + 25.50
+        breakdown.add(createCategorySummary("Saúde", 35.75, "#FF9800", "🏥", 1));         // 35.75
+        breakdown.add(createCategorySummary("Entretenimento", 60.00, "#9C27B0", "🎬", 1)); // 60.00
+
+        // Total: 352.90 + 163.50 + 35.75 + 60.00 = 612.15 ✅
+        return breakdown;
+    }
+
+    private CategorySummary createCategorySummary(String name, double totalAmount, String color, String icon, int transactionCount) {
+        CategorySummary summary = new CategorySummary();
+
+        CategoryDTO category = new CategoryDTO();
+        category.setId(UUID.randomUUID());
+        category.setName(name);
+        category.setColor(color);
+        category.setIcon(icon);
+        summary.setCategory(category);
+
+        summary.setTotalAmount(totalAmount);
+        summary.setTransactionCount(transactionCount);
+        summary.setPercentage(totalAmount / 4612.15 * 100); // Percentual do total
+        summary.setAverageAmount(totalAmount / transactionCount); // Valor médio por transação
+
+        return summary;
+    }
+
+    private String getCategoryColor(String categoryName) {
+        return switch (categoryName) {
+            case "Alimentação" -> "#4CAF50";
+            case "Transporte" -> "#2196F3";
+            case "Saúde" -> "#FF9800";
+            case "Entretenimento" -> "#9C27B0";
+            case "Transferência" -> "#607D8B";
+            case "Renda" -> "#8BC34A";
+            default -> "#9E9E9E";
+        };
+    }
+
+    private String getCategoryIcon(String categoryName) {
+        return switch (categoryName) {
+            case "Alimentação" -> "🍽️";
+            case "Transporte" -> "🚗";
+            case "Saúde" -> "🏥";
+            case "Entretenimento" -> "🎬";
+            case "Transferência" -> "💸";
+            case "Renda" -> "💰";
+            default -> "📝";
+        };
     }
 
     @Test

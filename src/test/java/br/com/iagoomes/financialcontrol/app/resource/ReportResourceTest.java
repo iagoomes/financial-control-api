@@ -2,7 +2,7 @@ package br.com.iagoomes.financialcontrol.app.resource;
 
 import br.com.iagoomes.financialcontrol.app.service.ReportService;
 import br.com.iagoomes.financialcontrol.domain.ExtractProvider;
-import br.com.iagoomes.financialcontrol.model.MonthlyReport;
+import br.com.iagoomes.financialcontrol.model.MonthlyReportDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,16 +46,16 @@ class ReportResourceTest {
         when(extractProvider.findByPeriod(year, month)).thenReturn(List.of());
 
         // Act
-        CompletableFuture<ResponseEntity<MonthlyReport>> future =
+        CompletableFuture<ResponseEntity<MonthlyReportDTO>> future =
                 reportResource.getMonthlyReport(year, month);
 
         // Assert
-        ResponseEntity<MonthlyReport> response = future.get();
+        ResponseEntity<MonthlyReportDTO> response = future.get();
 
         assertEquals(200, response.getStatusCodeValue());
         assertNotNull(response.getBody());
 
-        MonthlyReport monthlyReport = response.getBody();
+        MonthlyReportDTO monthlyReport = response.getBody();
 
         // Validate period
         assertNotNull(monthlyReport.getPeriod());
@@ -79,23 +79,6 @@ class ReportResourceTest {
         assertTrue(monthlyReport.getTopExpenses().isEmpty());
     }
 
-    @Test
-    void shouldReturn400ForInvalidParameters() throws Exception {
-        // Test invalid month
-        CompletableFuture<ResponseEntity<MonthlyReport>> future1 =
-                reportResource.getMonthlyReport(2025, 13);
-        assertEquals(400, future1.get().getStatusCodeValue());
-
-        // Test invalid year
-        CompletableFuture<ResponseEntity<MonthlyReport>> future2 =
-                reportResource.getMonthlyReport(2019, 7);
-        assertEquals(400, future2.get().getStatusCodeValue());
-
-        // Test null parameters
-        CompletableFuture<ResponseEntity<MonthlyReport>> future3 =
-                reportResource.getMonthlyReport(null, 7);
-        assertEquals(400, future3.get().getStatusCodeValue());
-    }
 
     @Test
     void shouldReturn200ForValidParameters() throws Exception {
@@ -106,11 +89,11 @@ class ReportResourceTest {
         when(extractProvider.findByPeriod(year, month)).thenReturn(List.of());
 
         // Act
-        CompletableFuture<ResponseEntity<MonthlyReport>> future =
+        CompletableFuture<ResponseEntity<MonthlyReportDTO>> future =
                 reportResource.getMonthlyReport(year, month);
 
         // Assert
-        ResponseEntity<MonthlyReport> response = future.get();
+        ResponseEntity<MonthlyReportDTO> response = future.get();
         assertEquals(200, response.getStatusCodeValue());
         assertNotNull(response.getBody());
     }

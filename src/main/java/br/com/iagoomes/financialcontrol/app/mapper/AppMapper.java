@@ -8,7 +8,7 @@ import br.com.iagoomes.financialcontrol.model.CategorySummary;
 import br.com.iagoomes.financialcontrol.model.ExtractAnalysisResponse;
 import br.com.iagoomes.financialcontrol.model.ExtractSummary;
 import br.com.iagoomes.financialcontrol.model.FinancialSummary;
-import br.com.iagoomes.financialcontrol.model.Period;
+import br.com.iagoomes.financialcontrol.model.PeriodDTO;
 import br.com.iagoomes.financialcontrol.model.TransactionDTO;
 import org.springframework.stereotype.Component;
 
@@ -64,8 +64,8 @@ public class AppMapper {
     /**
      * Create Period DTO
      */
-    private Period createPeriod(Integer month, Integer year) {
-        Period period = new Period();
+    private PeriodDTO createPeriod(Integer month, Integer year) {
+        PeriodDTO period = new PeriodDTO();
         period.setMonth(month);
         period.setYear(year);
 
