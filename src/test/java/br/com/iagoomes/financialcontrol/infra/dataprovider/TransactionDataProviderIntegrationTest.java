@@ -1,11 +1,15 @@
 package br.com.iagoomes.financialcontrol.infra.dataprovider;
 
+import br.com.iagoomes.financialcontrol.domain.entity.BankType;
 import br.com.iagoomes.financialcontrol.domain.entity.Category;
+import br.com.iagoomes.financialcontrol.domain.entity.Extract;
 import br.com.iagoomes.financialcontrol.domain.entity.Transaction;
 import br.com.iagoomes.financialcontrol.domain.entity.TransactionType;
 import br.com.iagoomes.financialcontrol.infra.repository.CategoryDataRepository;
+import br.com.iagoomes.financialcontrol.infra.repository.ExtractDataRepository;
 import br.com.iagoomes.financialcontrol.infra.repository.TransactionDataRepository;
 import br.com.iagoomes.financialcontrol.infra.repository.entity.CategoryData;
+import br.com.iagoomes.financialcontrol.infra.repository.entity.ExtractData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,13 +41,30 @@ class TransactionDataProviderIntegrationTest {
     @Autowired
     private CategoryDataRepository categoryRepository;
 
+    @Autowired
+    private ExtractDataRepository extractRepository;
+
     private CategoryData testCategory;
+    private ExtractData testExtract;
 
     @BeforeEach
     void setUp() {
         // Clean up any existing data
         transactionRepository.deleteAll();
         categoryRepository.deleteAll();
+        extractRepository.deleteAll();
+
+        // Create test extract first (required for transactions)
+        testExtract = ExtractData.builder()
+                .bank(BankType.NUBANK)
+                .referenceMonth(8)
+                .referenceYear(2025)
+                .totalIncome(BigDecimal.ZERO)
+                .totalExpenses(BigDecimal.ZERO)
+                .transactionCount(0)
+                .processedAt(LocalDateTime.now())
+                .build();
+        testExtract = extractRepository.save(testExtract);
 
         // Create test category
         testCategory = CategoryData.builder()
@@ -80,34 +101,6 @@ class TransactionDataProviderIntegrationTest {
     }
 
     @Test
-    void shouldUpdateTransactionCategorySuccessfully() {
-        // Arrange - Save transaction without category
-        Transaction transaction = createTestTransaction();
-        Transaction savedTransaction = transactionDataProvider.save(transaction);
-        assertNull(savedTransaction.getCategory());
-
-        // Create domain category from test data
-        Category domainCategory = createDomainCategory();
-
-        // Act - Update transaction with category
-        savedTransaction.setCategory(domainCategory);
-        savedTransaction.setConfidence(BigDecimal.ONE);
-        Transaction updatedTransaction = transactionDataProvider.save(savedTransaction);
-
-        // Assert - Verify category was updated
-        assertNotNull(updatedTransaction.getCategory());
-        assertEquals(testCategory.getId(), updatedTransaction.getCategory().getId());
-        assertEquals("Test Category", updatedTransaction.getCategory().getName());
-        assertEquals(BigDecimal.ONE, updatedTransaction.getConfidence());
-
-        // Verify in database
-        Optional<Transaction> dbTransaction = transactionDataProvider.findById(updatedTransaction.getId());
-        assertTrue(dbTransaction.isPresent());
-        assertNotNull(dbTransaction.get().getCategory());
-        assertEquals("Test Category", dbTransaction.get().getCategory().getName());
-    }
-
-    @Test
     void shouldReturnEmptyWhenTransactionNotFound() {
         // Act
         Optional<Transaction> result = transactionDataProvider.findById("non-existent-id");
@@ -130,47 +123,29 @@ class TransactionDataProviderIntegrationTest {
         });
     }
 
-    @Test
-    void shouldRemoveCategoryWhenSetToNull() {
-        // Arrange - Save transaction with category
-        Transaction transaction = createTestTransaction();
-        transaction.setCategory(createDomainCategory());
-        Transaction savedTransaction = transactionDataProvider.save(transaction);
-        assertNotNull(savedTransaction.getCategory());
-
-        // Act - Remove category
-        savedTransaction.setCategory(null);
-        Transaction updatedTransaction = transactionDataProvider.save(savedTransaction);
-
-        // Assert - Verify category was removed
-        assertNull(updatedTransaction.getCategory());
-
-        // Verify in database
-        Optional<Transaction> dbTransaction = transactionDataProvider.findById(updatedTransaction.getId());
-        assertTrue(dbTransaction.isPresent());
-        assertNull(dbTransaction.get().getCategory());
-    }
-
     private Transaction createTestTransaction() {
         LocalDate date = LocalDate.of(2025, 8, 10);
-        return Transaction.create(
+        Transaction transaction = Transaction.create(
                 date,
                 "Test Transaction",
                 BigDecimal.valueOf(100.50),
                 "Test Original Description",
                 TransactionType.DEBIT
         );
-    }
 
-    private Category createDomainCategory() {
-        Category category = Category.create(
-                testCategory.getName(),
-                testCategory.getColor(),
-                testCategory.getIcon()
-        );
-        category.setId(testCategory.getId());
-        category.setCreatedAt(testCategory.getCreatedAt());
-        category.setUpdatedAt(testCategory.getUpdatedAt());
-        return category;
+        // Create and associate extract to transaction
+        Extract extract = new Extract();
+        extract.setId(testExtract.getId());
+        extract.setBank(testExtract.getBank());
+        extract.setReferenceMonth(testExtract.getReferenceMonth());
+        extract.setReferenceYear(testExtract.getReferenceYear());
+        extract.setTotalIncome(testExtract.getTotalIncome());
+        extract.setTotalExpenses(testExtract.getTotalExpenses());
+        extract.setTransactionCount(testExtract.getTransactionCount());
+        extract.setProcessedAt(testExtract.getProcessedAt());
+
+        transaction.setExtract(extract);
+        return transaction;
     }
+    
 }

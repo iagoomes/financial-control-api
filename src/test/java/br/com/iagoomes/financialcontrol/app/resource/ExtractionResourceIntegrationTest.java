@@ -3,7 +3,7 @@ package br.com.iagoomes.financialcontrol.app.resource;
 import br.com.iagoomes.financialcontrol.app.service.ExtractService;
 import br.com.iagoomes.financialcontrol.model.ExtractAnalysisResponse;
 import br.com.iagoomes.financialcontrol.model.FinancialSummary;
-import br.com.iagoomes.financialcontrol.model.Period;
+import br.com.iagoomes.financialcontrol.model.PeriodDTO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -230,7 +230,7 @@ class ExtractionResourceIntegrationTest {
         ExtractAnalysisResponse response = new ExtractAnalysisResponse();
 
         // Configurar período
-        Period period = new Period();
+        PeriodDTO period = new PeriodDTO();
         period.setMonth(7);
         period.setYear(2025);
         response.setPeriod(period);

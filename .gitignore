@@ -32,3 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 /data/
+
+### Mac ###
+.DS_Store
+
+### workload archive files ###
+src/main/resources/temp/
