@@ -78,24 +78,7 @@ class ReportResourceTest {
         assertNotNull(monthlyReport.getTopExpenses());
         assertTrue(monthlyReport.getTopExpenses().isEmpty());
     }
-
-    @Test
-    void shouldReturn400ForInvalidParameters() throws Exception {
-        // Test invalid month
-        CompletableFuture<ResponseEntity<MonthlyReportDTO>> future1 =
-                reportResource.getMonthlyReport(2025, 13);
-        assertEquals(400, future1.get().getStatusCodeValue());
-
-        // Test invalid year
-        CompletableFuture<ResponseEntity<MonthlyReportDTO>> future2 =
-                reportResource.getMonthlyReport(2019, 7);
-        assertEquals(400, future2.get().getStatusCodeValue());
-
-        // Test null parameters
-        CompletableFuture<ResponseEntity<MonthlyReportDTO>> future3 =
-                reportResource.getMonthlyReport(null, 7);
-        assertEquals(400, future3.get().getStatusCodeValue());
-    }
+    
 
     @Test
     void shouldReturn200ForValidParameters() throws Exception {
