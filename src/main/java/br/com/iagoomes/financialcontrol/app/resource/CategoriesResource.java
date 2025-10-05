@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Component
@@ -17,7 +18,7 @@ public class CategoriesResource implements CategoriesApiDelegate {
     private final CategoryService categoryService;
 
     @Override
-    public CompletableFuture<ResponseEntity<List<CategoryDTO>>> listCategories() {
+    public CompletableFuture<ResponseEntity<List<CategoryDTO>>> listUserCategories(UUID userId) {
         return CompletableFuture.supplyAsync(() -> {
             List<CategoryDTO> categories = categoryService.listCategories();
             return ResponseEntity.ok(categories);

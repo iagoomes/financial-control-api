@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -24,7 +25,9 @@ public class ReportResource implements ReportsApiDelegate {
      * Generate monthly report for the specified period
      */
     @Override
-    public CompletableFuture<ResponseEntity<MonthlyReportDTO>> getMonthlyReport(Integer year, Integer month) {
+    public CompletableFuture<ResponseEntity<MonthlyReportDTO>> getUserMonthlyReport(UUID userId,
+                                                                                    Integer year,
+                                                                                    Integer month) {
         log.info("Resource: Generating monthly report for {}/{}", month, year);
 
         return CompletableFuture.supplyAsync(() -> {

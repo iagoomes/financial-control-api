@@ -26,7 +26,7 @@ public class ExtractionResource implements ExtractsApiDelegate {
     private final ExtractService extractService; // ✅ Chama Application Service
 
     @Override
-    public CompletableFuture<ResponseEntity<ExtractAnalysisResponse>> getExtractById(UUID extractId) {
+    public CompletableFuture<ResponseEntity<ExtractAnalysisResponse>> getUserExtractById(UUID userId, UUID extractId) {
         try {
             log.info("Resource: Fetching extract by ID: {}", extractId);
 
@@ -41,7 +41,10 @@ public class ExtractionResource implements ExtractsApiDelegate {
     }
 
     @Override
-    public CompletableFuture<ResponseEntity<List<ExtractSummary>>> listExtracts(String bank, Integer year, Integer month) {
+    public CompletableFuture<ResponseEntity<List<ExtractSummary>>> listUserExtracts(UUID userId,
+                                                                                    String bank,
+                                                                                    Integer year,
+                                                                                    Integer month) {
         try {
             log.info("Resource: Listing extracts with filters - bank: {}, year: {}, month: {}", bank, year, month);
 
@@ -60,8 +63,11 @@ public class ExtractionResource implements ExtractsApiDelegate {
     }
 
     @Override
-    public CompletableFuture<ResponseEntity<ExtractAnalysisResponse>> uploadExtract(
-            MultipartFile file, String bank, Integer month, Integer year) {
+    public CompletableFuture<ResponseEntity<ExtractAnalysisResponse>> uploadUserExtract(UUID userId,
+                                                                                        MultipartFile file,
+                                                                                        String bank,
+                                                                                        Integer month,
+                                                                                        Integer year) {
 
         try {
             log.info("Resource: Processing extract upload - bank: {}, month: {}, year: {}", bank, month, year);

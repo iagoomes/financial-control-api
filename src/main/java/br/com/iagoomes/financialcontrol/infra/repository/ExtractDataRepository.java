@@ -47,4 +47,18 @@ public interface ExtractDataRepository extends JpaRepository<ExtractData, String
     @EntityGraph(attributePaths = {"transactions"})
     List<ExtractData> findByReferenceYearAndReferenceMonth(Integer referenceYear, Integer referenceMonth);
 
+    // --------------------
+    // User-scoped queries
+    // --------------------
+
+    @EntityGraph(attributePaths = {"transactions"})
+    Optional<ExtractData> findByUser_IdAndBankAndReferenceMonthAndReferenceYear(
+            String userId, BankType bank, Integer month, Integer year);
+
+    @EntityGraph(attributePaths = {"transactions"})
+    List<ExtractData> findByUser_IdAndReferenceYearAndReferenceMonth(String userId, Integer year, Integer month);
+
+    List<ExtractData> findByUser_Id(String userId);
+
+    List<ExtractData> findByUser_IdAndReferenceYear(String userId, Integer year);
 }

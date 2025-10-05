@@ -14,8 +14,6 @@ public interface ExtractProvider {
     Optional<Extract> findByIdWithTransactions(String extractId);
     Extract save(Extract extract);
 
-    /**
-     * Find all extracts for a specific period (month/year)
-     */
+    // Added to support monthly report use case
     List<Extract> findByPeriod(Integer year, Integer month);
 }
