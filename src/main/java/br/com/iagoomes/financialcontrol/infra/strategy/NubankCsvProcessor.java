@@ -3,6 +3,7 @@ package br.com.iagoomes.financialcontrol.infra.strategy;
 import br.com.iagoomes.financialcontrol.domain.entity.Extract;
 import br.com.iagoomes.financialcontrol.domain.entity.Transaction;
 import br.com.iagoomes.financialcontrol.domain.entity.TransactionType;
+import br.com.iagoomes.financialcontrol.infra.exception.FileProcessingException;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
@@ -47,7 +48,7 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
 
         } catch (Exception e) {
             log.error("Error processing Nubank CSV file", e);
-            throw new RuntimeException("Failed to process Nubank CSV: " + e.getMessage(), e);
+            throw new FileProcessingException("Failed to process Nubank CSV: " + e.getMessage(), e);
         }
     }
 
@@ -59,13 +60,20 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
                 .withSkipLines(1) // Skip header
                 .build()) {
 
-            List<String[]> records = reader.readAll();
+            List<String[]> rows = reader.readAll();
 
-            for (int i = 0; i < records.size(); i++) {
-                String[] record = records.get(i);
+            for (int i = 0; i < rows.size(); i++) {
+                String[] row = rows.get(i);
 
                 try {
-                    Transaction transaction = parseTransactionRecord(record, i + 2);
+                    Transaction transaction = parseCsvRow(row, i + 2);
+
+                    // Ignore credit card invoice payments (e.g., "Pagamento recebido" with negative amount)
+                    if (isCreditCardPayment(transaction.getTitle(), transaction.getAmount())) {
+                        log.debug("Skipping credit card payment at line {}: {} {}", i + 2, transaction.getTitle(), transaction.getAmount());
+                        continue;
+                    }
+
                     transactions.add(transaction);
                 } catch (Exception e) {
                     log.warn("Failed to parse transaction at line {}: {}", i + 2, e.getMessage());
@@ -77,15 +85,15 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
         return transactions;
     }
 
-    private Transaction parseTransactionRecord(String[] record, int lineNumber) {
-        if (record.length < 3) {
+    private Transaction parseCsvRow(String[] row, int lineNumber) {
+        if (row.length < 3) {
             throw new IllegalArgumentException("Invalid CSV format at line " + lineNumber +
-                    ": expected 3 columns, got " + record.length);
+                    ": expected 3 columns, got " + row.length);
         }
 
-        String dateString = record[0].trim();
-        String title = record[1].trim();
-        String amountString = record[2].trim();
+        String dateString = row[0].trim();
+        String title = row[1].trim();
+        String amountString = row[2].trim();
 
         // Parse date
         LocalDate date;
@@ -108,6 +116,17 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
 
         // Create transaction
         return Transaction.create(date, title, amount, title, transactionType);
+    }
+
+    private boolean isCreditCardPayment(String title, BigDecimal amount) {
+        if (title == null) return false;
+        String t = title.trim().toLowerCase();
+        // Typical credit card payment entry on Nubank invoice CSV
+        if (t.equals("pagamento recebido")) {
+            return true;
+        }
+        // Any other "pagamento" line with negative amount (credit on the invoice) should also be excluded
+        return t.contains("pagamento") && amount != null && amount.signum() < 0;
     }
 
     private TransactionType determineTransactionType(String title, BigDecimal amount) {
