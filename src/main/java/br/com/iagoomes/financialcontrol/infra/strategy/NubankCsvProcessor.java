@@ -3,6 +3,7 @@ package br.com.iagoomes.financialcontrol.infra.strategy;
 import br.com.iagoomes.financialcontrol.domain.entity.Extract;
 import br.com.iagoomes.financialcontrol.domain.entity.Transaction;
 import br.com.iagoomes.financialcontrol.domain.entity.TransactionType;
+import br.com.iagoomes.financialcontrol.domain.entity.User;
 import br.com.iagoomes.financialcontrol.infra.exception.FileProcessingException;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
@@ -33,21 +34,21 @@ public class NubankCsvProcessor implements FileProcessorStrategy {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
-    public Extract processFile(MultipartFile file, Integer month, Integer year) {
-        log.info("Starting to process Nubank CSV file: {}", file.getOriginalFilename());
+    public Extract processFile(MultipartFile file, Integer month, Integer year, User user) {
+        log.info("Starting to process Nubank CSV file: {} for user: {}", file.getOriginalFilename(), user.getId());
 
         validateFile(file);
 
         try {
             List<Transaction> transactions = parseTransactions(file);
-            Extract extract = Extract.create(transactions, month, year);
+            Extract extract = Extract.create(transactions, month, year, user);
 
-            log.info("Successfully processed {} transactions from Nubank CSV with automatic categorization",
-                    transactions.size());
+            log.info("Successfully processed {} transactions from Nubank CSV for user: {}",
+                    transactions.size(), user.getId());
             return extract;
 
         } catch (Exception e) {
-            log.error("Error processing Nubank CSV file", e);
+            log.error("Error processing Nubank CSV file for user: {}", user.getId(), e);
             throw new FileProcessingException("Failed to process Nubank CSV: " + e.getMessage(), e);
         }
     }

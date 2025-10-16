@@ -14,51 +14,21 @@ import java.util.Optional;
 @Repository
 public interface ExtractDataRepository extends JpaRepository<ExtractData, String> {
 
-    @Override
-    @EntityGraph(attributePaths = {"transactions"})
-    Optional<ExtractData> findById(String id);
-
-    /**
-     * Find extract by bank, month and year
-     */
-    Optional<ExtractData> findByBankAndReferenceMonthAndReferenceYear(
-            BankType bank, Integer month, Integer year);
-
-    /**
-     * Find extracts by year and month range
-     */
-    @Query("SELECT e FROM ExtractData e WHERE e.referenceYear = :year " +
-            "AND e.referenceMonth BETWEEN :startMonth AND :endMonth " +
-            "ORDER BY e.referenceMonth ASC")
-    List<ExtractData> findByYearAndMonthRange(@Param("year") Integer year,
-                                              @Param("startMonth") Integer startMonth,
-                                              @Param("endMonth") Integer endMonth);
-
-    List<ExtractData> findByBank(BankType bankType);
-
-    List<ExtractData> findByReferenceYear(Integer referenceYear);
-
-    @Query("SELECT e FROM ExtractData e LEFT JOIN FETCH e.transactions WHERE e.id = :extractId")
-    Optional<ExtractData> findByIdWithTransactions(@Param("extractId") String extractId);
-
-    /**
-     * Find extracts by specific year and month
-     */
-    @EntityGraph(attributePaths = {"transactions"})
-    List<ExtractData> findByReferenceYearAndReferenceMonth(Integer referenceYear, Integer referenceMonth);
-
-    // --------------------
     // User-scoped queries
-    // --------------------
+    Optional<ExtractData> findByUser_IdAndId(String userId, String extractId);
 
-    @EntityGraph(attributePaths = {"transactions"})
-    Optional<ExtractData> findByUser_IdAndBankAndReferenceMonthAndReferenceYear(
-            String userId, BankType bank, Integer month, Integer year);
+    @Query("SELECT e FROM ExtractData e LEFT JOIN FETCH e.transactions WHERE e.user.id = :userId AND e.id = :extractId")
+    Optional<ExtractData> findByUser_IdAndIdWithTransactions(@Param("userId") String userId, @Param("extractId") String extractId);
+
+    List<ExtractData> findByUser_Id(String userId);
+
+    List<ExtractData> findByUser_IdAndBank(String userId, BankType bank);
+
+    List<ExtractData> findByUser_IdAndReferenceYear(String userId, Integer year);
 
     @EntityGraph(attributePaths = {"transactions"})
     List<ExtractData> findByUser_IdAndReferenceYearAndReferenceMonth(String userId, Integer year, Integer month);
 
-    List<ExtractData> findByUser_Id(String userId);
-
-    List<ExtractData> findByUser_IdAndReferenceYear(String userId, Integer year);
+    Optional<ExtractData> findByUser_IdAndBankAndReferenceMonthAndReferenceYear(
+            String userId, BankType bank, Integer month, Integer year);
 }

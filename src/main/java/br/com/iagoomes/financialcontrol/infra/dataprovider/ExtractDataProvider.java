@@ -20,87 +20,63 @@ public class ExtractDataProvider implements ExtractProvider {
     private final ExtractDataRepository extractRepository;
     private final ExtractMapper extractMapper;
 
-    public Optional<Extract> findByBankAndPeriod(BankType bankType, Integer month, Integer year) {
-        Optional<ExtractData> extractData = extractRepository.findByBankAndReferenceMonthAndReferenceYear(
-                bankType, month, year);
-
-        return extractData.map(extractMapper::toExtractDomain);
-    }
-
-    public List<Extract> findByBank(BankType bankType) {
-        List<ExtractData> extractDataList = extractRepository.findByBank(bankType);
-
-        return extractDataList.stream()
-                .map(extractMapper::toExtractDomain)
-                .toList();
-    }
-
-    public List<Extract> findByYear(Integer year) {
-        List<ExtractData> extractDataList = extractRepository.findByReferenceYear(year);
-
-        return extractDataList.stream()
-                .map(extractMapper::toExtractDomain)
-                .toList();
-    }
-
-    public List<Extract> findAll() {
-        List<ExtractData> extractDataList = extractRepository.findAll();
-
-        return extractDataList.stream()
-                .map(extractMapper::toExtractDomain)
-                .toList();
-    }
-
-    public Optional<Extract> findByIdWithTransactions(String extractId) {
-        Optional<ExtractData> extractData = extractRepository.findByIdWithTransactions(extractId);
-
-        return extractData.map(extractMapper::toExtractDomain);
-    }
-
-    public Extract save(Extract extract) {
-        ExtractData extractData = extractMapper.toExtractData(extract);
-        ExtractData savedExtractData = extractRepository.save(extractData);
-        return extractMapper.toExtractDomain(savedExtractData);
-    }
-
+    @Override
     @Transactional(readOnly = true)
-    public List<Extract> findByPeriod(Integer year, Integer month) {
-        List<ExtractData> extractDataList = extractRepository.findByReferenceYearAndReferenceMonth(year, month);
-
-        return extractDataList.stream()
-                .map(extractMapper::toExtractDomain)
-                .toList();
-    }
-
-    // --------------------
-    // User-scoped implementations
-    // --------------------
-
-    @Transactional(readOnly = true)
-    public List<Extract> findByUserAndPeriod(String userId, Integer year, Integer month) {
-        List<ExtractData> extractDataList = extractRepository
-                .findByUser_IdAndReferenceYearAndReferenceMonth(userId, year, month);
-        return extractDataList.stream().map(extractMapper::toExtractDomain).toList();
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<Extract> findByUserAndBankAndPeriod(String userId, BankType bankType, Integer month, Integer year) {
-        return extractRepository
-                .findByUser_IdAndBankAndReferenceMonthAndReferenceYear(userId, bankType, month, year)
+    public Optional<Extract> findByUserAndId(String userId, String extractId) {
+        return extractRepository.findByUser_IdAndId(userId, extractId)
                 .map(extractMapper::toExtractDomain);
     }
 
+    @Override
     @Transactional(readOnly = true)
-    public List<Extract> findByUser(String userId) {
+    public Optional<Extract> findByUserAndIdWithTransactions(String userId, String extractId) {
+        return extractRepository.findByUser_IdAndIdWithTransactions(userId, extractId)
+                .map(extractMapper::toExtractDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Extract> findAllByUser(String userId) {
         return extractRepository.findByUser_Id(userId).stream()
                 .map(extractMapper::toExtractDomain)
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Extract> findByUserAndBank(String userId, BankType bankType) {
+        return extractRepository.findByUser_IdAndBank(userId, bankType).stream()
+                .map(extractMapper::toExtractDomain)
+                .toList();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<Extract> findByUserAndYear(String userId, Integer year) {
         return extractRepository.findByUser_IdAndReferenceYear(userId, year).stream()
                 .map(extractMapper::toExtractDomain)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Extract> findByUserAndPeriod(String userId, Integer year, Integer month) {
+        return extractRepository.findByUser_IdAndReferenceYearAndReferenceMonth(userId, year, month).stream()
+                .map(extractMapper::toExtractDomain)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Extract> findByUserBankAndPeriod(String userId, BankType bankType, Integer month, Integer year) {
+        return extractRepository.findByUser_IdAndBankAndReferenceMonthAndReferenceYear(userId, bankType, month, year)
+                .map(extractMapper::toExtractDomain);
+    }
+
+    @Override
+    public Extract save(Extract extract) {
+        ExtractData extractData = extractMapper.toExtractData(extract);
+        ExtractData savedExtractData = extractRepository.save(extractData);
+        return extractMapper.toExtractDomain(savedExtractData);
     }
 }
