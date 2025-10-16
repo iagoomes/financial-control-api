@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 /**
- * Use case for getting extract by ID
+ * Use case for getting extract by ID (user-scoped)
  */
 @Slf4j
 @Component
@@ -18,13 +18,13 @@ public class GetExtractByIdUseCase {
 
     private final ExtractProvider extractProvider;
 
-    public Optional<Extract> execute(String extractId) {
-        log.debug("Executing GetExtractByIdUseCase for ID: {}", extractId);
+    public Optional<Extract> execute(String userId, String extractId) {
+        log.debug("Executing GetExtractByIdUseCase for user: {}, extractId: {}", userId, extractId);
 
-        Optional<Extract> extract = extractProvider.findByIdWithTransactions(extractId);
+        Optional<Extract> extract = extractProvider.findByUserAndIdWithTransactions(userId, extractId);
 
         if (extract.isEmpty()) {
-            log.warn("Extract not found with ID: {}", extractId);
+            log.warn("Extract not found with ID: {} for user: {}", extractId, userId);
         }
 
         return extract;

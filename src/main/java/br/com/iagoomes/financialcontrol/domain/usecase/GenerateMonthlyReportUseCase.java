@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Use case for generating monthly reports
+ * Use case for generating monthly reports (user-scoped)
  */
 @Slf4j
 @Component
@@ -28,13 +28,13 @@ public class GenerateMonthlyReportUseCase {
     private final ExtractProvider extractProvider;
 
     /**
-     * Generate monthly report for the specified period
+     * Generate monthly report for the specified period and user
      */
-    public MonthlyReport execute(Integer year, Integer month) {
-        log.info("Generating monthly report for {}/{}", month, year);
+    public MonthlyReport execute(String userId, Integer year, Integer month) {
+        log.info("Generating monthly report for user: {}, period: {}/{}", userId, month, year);
 
-        // Find all extracts for the specified period
-        List<Extract> extracts = extractProvider.findByPeriod(year, month);
+        // Find all extracts for the specified period and user
+        List<Extract> extracts = extractProvider.findByUserAndPeriod(userId, year, month);
 
         if (extracts.isEmpty()) {
             log.warn("No extracts found for period {}/{}", month, year);
