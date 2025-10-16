@@ -7,13 +7,14 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ExtractProvider {
-    Optional<Extract> findByBankAndPeriod(BankType bankType, Integer month, Integer year);
-    List<Extract> findByBank(BankType bankType);
-    List<Extract> findByYear(Integer year);
-    List<Extract> findAll();
-    Optional<Extract> findByIdWithTransactions(String extractId);
-    Extract save(Extract extract);
+    // User-scoped methods
+    Optional<Extract> findByUserAndId(String userId, String extractId);
+    Optional<Extract> findByUserAndIdWithTransactions(String userId, String extractId);
+    List<Extract> findAllByUser(String userId);
+    List<Extract> findByUserAndBank(String userId, BankType bankType);
+    List<Extract> findByUserAndYear(String userId, Integer year);
+    List<Extract> findByUserAndPeriod(String userId, Integer year, Integer month);
+    Optional<Extract> findByUserBankAndPeriod(String userId, BankType bankType, Integer month, Integer year);
 
-    // Added to support monthly report use case
-    List<Extract> findByPeriod(Integer year, Integer month);
+    Extract save(Extract extract);
 }

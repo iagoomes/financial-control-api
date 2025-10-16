@@ -9,6 +9,8 @@ public class Extract {
 
     private String id;
 
+    private User user;
+
     private BankType bank;
 
     private Integer referenceMonth;
@@ -25,7 +27,7 @@ public class Extract {
 
     private List<Transaction> transactions = new ArrayList<>();
 
-    public static Extract create(List<Transaction> transactions, Integer month, Integer year) {
+    public static Extract create(List<Transaction> transactions, Integer month, Integer year, User user) {
         BigDecimal totalIncome = BigDecimal.ZERO;
         BigDecimal totalExpenses = BigDecimal.ZERO;
 
@@ -38,6 +40,7 @@ public class Extract {
         }
 
         Extract extract = new Extract();
+        extract.setUser(user);
         extract.setBank(BankType.NUBANK);
         extract.setReferenceMonth(month);
         extract.setReferenceYear(year);
@@ -50,6 +53,14 @@ public class Extract {
         transactions.forEach(transaction -> transaction.setExtract(extract));
 
         return extract;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getId() {
