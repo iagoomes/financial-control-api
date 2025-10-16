@@ -3,6 +3,7 @@ package br.com.iagoomes.financialcontrol.app.mapper;
 import br.com.iagoomes.financialcontrol.domain.entity.Category;
 import br.com.iagoomes.financialcontrol.domain.entity.Extract;
 import br.com.iagoomes.financialcontrol.domain.entity.Transaction;
+import br.com.iagoomes.financialcontrol.domain.entity.User;
 import br.com.iagoomes.financialcontrol.model.CategoryDTO;
 import br.com.iagoomes.financialcontrol.model.CategorySummary;
 import br.com.iagoomes.financialcontrol.model.ExtractAnalysisResponse;
@@ -10,6 +11,7 @@ import br.com.iagoomes.financialcontrol.model.ExtractSummary;
 import br.com.iagoomes.financialcontrol.model.FinancialSummary;
 import br.com.iagoomes.financialcontrol.model.PeriodDTO;
 import br.com.iagoomes.financialcontrol.model.TransactionDTO;
+import br.com.iagoomes.financialcontrol.model.UserDTO;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -194,5 +196,19 @@ public class AppMapper {
                     return summary;
                 })
                 .toList();
+    }
+
+    /**
+     * Convert User entity to UserDTO
+     */
+    public UserDTO toUserDTO(User user) {
+        UserDTO userDTO = new UserDTO();
+
+        userDTO.setId(UUID.fromString(user.getId()));
+        userDTO.setName(user.getName());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setCreatedAt(Date.from(user.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant()));
+
+        return userDTO;
     }
 }

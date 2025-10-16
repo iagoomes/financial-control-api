@@ -31,37 +31,37 @@ public class ExtractService {
     private final AppMapper appMapper;
 
     /**
-     * Process extract file upload
+     * Process extract file upload (user-scoped)
      */
-    public ExtractAnalysisResponse processExtractFile(MultipartFile file, String bank, Integer month, Integer year) {
-        log.info("Processing extract file: bank={}, month={}, year={}", bank, month, year);
+    public ExtractAnalysisResponse processExtractFile(UUID userId, MultipartFile file, String bank, Integer month, Integer year) {
+        log.info("Processing extract file for user: {}, bank={}, month={}, year={}", userId, bank, month, year);
 
         validateUploadParameters(file, bank, month, year);
 
         BankType bankType = BankType.valueOf(bank.toUpperCase());
-        Extract extract = processExtractFileUseCase.execute(file, bankType, month, year);
+        Extract extract = processExtractFileUseCase.execute(userId.toString(), file, bankType, month, year);
 
         return appMapper.toExtractAnalysisResponse(extract);
     }
 
     /**
-     * Get extract by ID
+     * Get extract by ID (user-scoped)
      */
-    public Optional<ExtractAnalysisResponse> getExtractById(UUID extractId) {
-        log.info("Getting extract by ID: {}", extractId);
+    public Optional<ExtractAnalysisResponse> getExtractById(UUID userId, UUID extractId) {
+        log.info("Getting extract by ID: {} for user: {}", extractId, userId);
 
-        Optional<Extract> extract = getExtractByIdUseCase.execute(extractId.toString());
+        Optional<Extract> extract = getExtractByIdUseCase.execute(userId.toString(), extractId.toString());
         return extract.map(appMapper::toExtractAnalysisResponse);
     }
 
     /**
-     * List extracts with filters
+     * List extracts with filters (user-scoped)
      */
-    public List<ExtractSummary> listExtracts(String bank, Integer year, Integer month) {
-        log.info("Listing extracts with filters - bank: {}, year: {}, month: {}", bank, year, month);
+    public List<ExtractSummary> listExtracts(UUID userId, String bank, Integer year, Integer month) {
+        log.info("Listing extracts for user: {} with filters - bank: {}, year: {}, month: {}", userId, bank, year, month);
 
         BankType bankType = bank != null ? BankType.valueOf(bank.toUpperCase()) : null;
-        List<Extract> extracts = listExtractsUseCase.execute(bankType, year, month);
+        List<Extract> extracts = listExtractsUseCase.execute(userId.toString(), bankType, year, month);
 
         return extracts.stream()
                 .map(appMapper::toExtractSummary)

@@ -27,9 +27,9 @@ public class TransactionResource implements TransactionsApiDelegate {
      * Updates the category of a transaction
      */
     @Override
-    public CompletableFuture<ResponseEntity<TransactionDTO>> categorizeTransaction(
-            UUID transactionId,
-            CategoryUpdateRequest categoryUpdateRequest) {
+    public CompletableFuture<ResponseEntity<TransactionDTO>> categorizeUserTransaction(UUID userId,
+                                                                                       UUID transactionId,
+                                                                                       CategoryUpdateRequest categoryUpdateRequest) {
 
         log.info("Resource: Categorizing transaction {} with category {}",
                 transactionId, categoryUpdateRequest.getCategoryId());

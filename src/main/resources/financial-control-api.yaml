@@ -12,14 +12,180 @@ tags:
     description: Operações relacionadas às categorias
   - name: Reports
     description: Relatórios e análises financeiras
+  - name: Users
+    description: Operações de cadastro e gestão de usuários
 paths:
-  /extracts/upload:
+  /users:
+    post:
+      tags:
+        - Users
+      summary: Cria um novo usuário
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: Usuário criado com sucesso
+          headers:
+            Location:
+              description: URL do recurso criado
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '400':
+          description: Requisição inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: E-mail já cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - Users
+      summary: Lista usuários
+      operationId: listUsers
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+          description: Página (0-based)
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+          description: Tamanho da página
+      responses:
+        '200':
+          description: Lista de usuários
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDTO'
+
+  /users/{userId}:
+    get:
+      tags:
+        - Users
+      summary: Busca usuário por ID
+      operationId: getUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Usuário encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '404':
+          description: Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+        - Users
+      summary: Atualiza campos do usuário
+      operationId: updateUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Usuário atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '400':
+          description: Requisição inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: E-mail já cadastrado para outro usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Users
+      summary: Remove usuário por ID
+      operationId: deleteUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Removido com sucesso
+        '404':
+          description: Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{userId}/extracts/upload:
     post:
       tags:
         - Extracts
-      summary: Upload e processa extrato bancário
-      description: Recebe um arquivo PDF ou CSV do extrato e retorna as transações processadas
-      operationId: uploadExtract
+      summary: Upload e processa extrato bancário do usuário
+      description: Recebe um arquivo PDF ou CSV do extrato do usuário e retorna as transações processadas
+      operationId: uploadUserExtract
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID do usuário proprietário do extrato
       requestBody:
         required: true
         content:
@@ -68,13 +234,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /extracts/{extractId}:
+  /users/{userId}/extracts/{extractId}:
     get:
       tags:
         - Extracts
-      summary: Busca análise de extrato por ID
-      operationId: getExtractById
+      summary: Busca análise de extrato por ID do usuário
+      operationId: getUserExtractById
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID do usuário proprietário do extrato
         - name: extractId
           in: path
           required: true
@@ -96,13 +269,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /extracts:
+  /users/{userId}/extracts:
     get:
       tags:
         - Extracts
-      summary: Lista todos os extratos processados
-      operationId: listExtracts
+      summary: Lista extratos processados do usuário
+      operationId: listUserExtracts
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID do usuário
         - name: bank
           in: query
           schema:
@@ -131,13 +311,19 @@ paths:
                 items:
                   $ref: '#/components/schemas/ExtractSummary'
 
-  /transactions/{transactionId}/categorize:
+  /users/{userId}/transactions/{transactionId}/categorize:
     patch:
       tags:
         - Transactions
-      summary: Atualiza categoria de uma transação
-      operationId: categorizeTransaction
+      summary: Atualiza categoria de uma transação do usuário
+      operationId: categorizeUserTransaction
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
         - name: transactionId
           in: path
           required: true
@@ -160,12 +346,19 @@ paths:
         '404':
           description: Transação não encontrada
 
-  /categories:
+  /users/{userId}/categories:
     get:
       tags:
         - Categories
-      summary: Lista todas as categorias disponíveis
-      operationId: listCategories
+      summary: Lista categorias disponíveis do usuário
+      operationId: listUserCategories
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Lista de categorias
@@ -176,13 +369,19 @@ paths:
                 items:
                   $ref: '#/components/schemas/CategoryDTO'
 
-  /reports/monthly:
+  /users/{userId}/reports/monthly:
     get:
       tags:
         - Reports
-      summary: Relatório mensal de gastos
-      operationId: getMonthlyReport
+      summary: Relatório mensal de gastos do usuário
+      operationId: getUserMonthlyReport
       parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
         - name: year
           in: query
           required: true
@@ -204,9 +403,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MonthlyReportDTO'
-
 components:
   schemas:
+    CreateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 180
+      required:
+        - name
+        - email
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 180
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - createdAt
+
     ExtractAnalysisResponse:
       type: object
       properties:

@@ -36,14 +36,14 @@ public class ReportService {
     private final AppMapper appMapper;
 
     /**
-     * Generate monthly report for the specified period
+     * Generate monthly report for the specified period (user-scoped)
      */
-    public MonthlyReportDTO getMonthlyReport(Integer year, Integer month) {
-        log.info("Service: Generating monthly report for {}/{}", month, year);
+    public MonthlyReportDTO getMonthlyReport(String userId, Integer year, Integer month) {
+        log.info("Service: Generating monthly report for user: {}, period: {}/{}", userId, month, year);
 
         // Execute use case
         MonthlyReport reportData =
-                generateMonthlyReportUseCase.execute(year, month);
+                generateMonthlyReportUseCase.execute(userId, year, month);
 
         // Map to DTO
         MonthlyReportDTO monthlyReport = new MonthlyReportDTO();

@@ -13,10 +13,12 @@ import java.util.List;
 public class ExtractMapper {
 
     private final TransactionMapper transactionMapper;
+    private final UserMapper userMapper;
 
     @Autowired
-    public ExtractMapper(TransactionMapper transactionMapper) {
+    public ExtractMapper(TransactionMapper transactionMapper, UserMapper userMapper) {
         this.transactionMapper = transactionMapper;
+        this.userMapper = userMapper;
     }
 
     public Extract toExtractDomain(ExtractData extractData) {
@@ -25,6 +27,9 @@ public class ExtractMapper {
         }
         Extract extract = new Extract();
         extract.setId(extractData.getId());
+        if (extractData.getUser() != null) {
+            extract.setUser(userMapper.toDomain(extractData.getUser()));
+        }
         extract.setBank(extractData.getBank());
         extract.setReferenceMonth(extractData.getReferenceMonth());
         extract.setReferenceYear(extractData.getReferenceYear());
@@ -48,6 +53,7 @@ public class ExtractMapper {
         }
         ExtractData extractData = ExtractData.builder()
                 .id(extract.getId())
+                .user(extract.getUser() != null ? userMapper.toData(extract.getUser()) : null)
                 .bank(extract.getBank())
                 .referenceMonth(extract.getReferenceMonth())
                 .referenceYear(extract.getReferenceYear())

@@ -10,6 +10,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -35,6 +37,10 @@ public class ExtractData {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id")
     private String id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserData user;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "bank", nullable = false)

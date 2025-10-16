@@ -26,26 +26,29 @@ public class ExtractionResource implements ExtractsApiDelegate {
     private final ExtractService extractService; // ✅ Chama Application Service
 
     @Override
-    public CompletableFuture<ResponseEntity<ExtractAnalysisResponse>> getExtractById(UUID extractId) {
+    public CompletableFuture<ResponseEntity<ExtractAnalysisResponse>> getUserExtractById(UUID userId, UUID extractId) {
         try {
-            log.info("Resource: Fetching extract by ID: {}", extractId);
+            log.info("Resource: Fetching extract by ID: {} for user: {}", extractId, userId);
 
-            Optional<ExtractAnalysisResponse> response = extractService.getExtractById(extractId);
+            Optional<ExtractAnalysisResponse> response = extractService.getExtractById(userId, extractId);
 
             return response.map(extractAnalysisResponse -> CompletableFuture.completedFuture(ResponseEntity.ok(extractAnalysisResponse))).orElseGet(() -> CompletableFuture.completedFuture(ResponseEntity.notFound().build()));
 
         } catch (Exception e) {
-            log.error("Resource: Error fetching extract by ID: {}", extractId, e);
+            log.error("Resource: Error fetching extract by ID: {} for user: {}", extractId, userId, e);
             return CompletableFuture.completedFuture(ResponseEntity.internalServerError().build());
         }
     }
 
     @Override
-    public CompletableFuture<ResponseEntity<List<ExtractSummary>>> listExtracts(String bank, Integer year, Integer month) {
+    public CompletableFuture<ResponseEntity<List<ExtractSummary>>> listUserExtracts(UUID userId,
+                                                                                    String bank,
+                                                                                    Integer year,
+                                                                                    Integer month) {
         try {
-            log.info("Resource: Listing extracts with filters - bank: {}, year: {}, month: {}", bank, year, month);
+            log.info("Resource: Listing extracts for user: {} with filters - bank: {}, year: {}, month: {}", userId, bank, year, month);
 
-            List<ExtractSummary> summaries = extractService.listExtracts(bank, year, month);
+            List<ExtractSummary> summaries = extractService.listExtracts(userId, bank, year, month);
 
             return CompletableFuture.completedFuture(ResponseEntity.ok(summaries));
 
@@ -54,19 +57,22 @@ public class ExtractionResource implements ExtractsApiDelegate {
             return CompletableFuture.completedFuture(ResponseEntity.badRequest().build());
 
         } catch (Exception e) {
-            log.error("Resource: Error listing extracts", e);
+            log.error("Resource: Error listing extracts for user: {}", userId, e);
             return CompletableFuture.completedFuture(ResponseEntity.internalServerError().build());
         }
     }
 
     @Override
-    public CompletableFuture<ResponseEntity<ExtractAnalysisResponse>> uploadExtract(
-            MultipartFile file, String bank, Integer month, Integer year) {
+    public CompletableFuture<ResponseEntity<ExtractAnalysisResponse>> uploadUserExtract(UUID userId,
+                                                                                        MultipartFile file,
+                                                                                        String bank,
+                                                                                        Integer month,
+                                                                                        Integer year) {
 
         try {
-            log.info("Resource: Processing extract upload - bank: {}, month: {}, year: {}", bank, month, year);
+            log.info("Resource: Processing extract upload for user: {}, bank: {}, month: {}, year: {}", userId, bank, month, year);
 
-            ExtractAnalysisResponse response = extractService.processExtractFile(file, bank, month, year);
+            ExtractAnalysisResponse response = extractService.processExtractFile(userId, file, bank, month, year);
 
             return CompletableFuture.completedFuture(ResponseEntity.ok(response));
 
@@ -75,7 +81,7 @@ public class ExtractionResource implements ExtractsApiDelegate {
             return CompletableFuture.completedFuture(ResponseEntity.badRequest().build());
 
         } catch (Exception e) {
-            log.error("Resource: Error processing extract upload", e);
+            log.error("Resource: Error processing extract upload for user: {}", userId, e);
             return CompletableFuture.completedFuture(ResponseEntity.internalServerError().build());
         }
     }
