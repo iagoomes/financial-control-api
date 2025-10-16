@@ -22,24 +22,24 @@ public class ReportResource implements ReportsApiDelegate {
     private final ReportService reportService;
 
     /**
-     * Generate monthly report for the specified period
+     * Generate monthly report for the specified period (user-scoped)
      */
     @Override
     public CompletableFuture<ResponseEntity<MonthlyReportDTO>> getUserMonthlyReport(UUID userId,
                                                                                     Integer year,
                                                                                     Integer month) {
-        log.info("Resource: Generating monthly report for {}/{}", month, year);
+        log.info("Resource: Generating monthly report for user: {}, period: {}/{}", userId, month, year);
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // Generate report
-                MonthlyReportDTO monthlyReport = reportService.getMonthlyReport(year, month);
+                // Generate report for user
+                MonthlyReportDTO monthlyReport = reportService.getMonthlyReport(userId.toString(), year, month);
 
-                log.info("Successfully generated monthly report for {}/{}", month, year);
+                log.info("Successfully generated monthly report for user: {}, period: {}/{}", userId, month, year);
                 return ResponseEntity.ok(monthlyReport);
 
             } catch (Exception e) {
-                log.error("Unexpected error generating monthly report for {}/{}", month, year, e);
+                log.error("Unexpected error generating monthly report for user: {}, period: {}/{}", userId, month, year, e);
                 return ResponseEntity.internalServerError().build();
             }
         });
